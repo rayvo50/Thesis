@@ -2,18 +2,18 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [100,120,160];
-P0 = [0,0,0];
+Pd = [100,120,170];
+P0 = [0,50,0];
 Dt=0.1;
 
 
 % filter design
-R_nav = .1*eye(4);
+R_nav = 10*eye(4);
 Q_nav = [1,  0.1, 0,  0   0;
         0.1, 1,   0,  0,  0;
-        0,   0,   1,  0,  0;
+        0,   0,   0.1,  0,  0;
         0,   0,   0,  1,  0;  
-        0,   0,   0,  0,  0.1];
+        0,   0,   0,  0,  0.01];
 P_nav = Q_nav;
 R_dock = 1*eye(3);
 Q_dock = [  0.1,   0, 0;
@@ -53,6 +53,7 @@ for k=2:length(t)
     % navigation filter --------------------------------
     x_nav_ = f_nav(x_nav(:,k-1),gyro,Dt);
     F = compute_F_nav(x_nav(:,k),Dt);
+    %x_nav_ = F*x_nav(:,k);
     P_nav_ = F*P_nav*F' + Q_nav;
     % dock estimate filter ----------------------------
     P_dock_ = P_dock + Q_dock;
@@ -79,7 +80,7 @@ for k=2:length(t)
 
     % ============ Aply control to the plant ==============================
     x(:,k) = model(x(:,k-1), u(:,k), Dt);
-    if sqrt((x(1,k)-Pd(1))^2 +(x(2,k)-Pd(2))^2) < 0.2
+    if sqrt((x(1,k)-Pd(1))^2 +(x(2,k)-Pd(2))^2) < 1
         break
     end
 end
@@ -91,11 +92,12 @@ temp = temp(:,2:k);
 
 % plots
 figure; hold on; grid on;
-plot(y(2,:), y(1,:));
+%plot(y(2,:), y(1,:));
 plot(x(2,:), x(1,:), 'LineWidth', 2); 
 plot(x_nav(2,:), x_nav(1,:), 'LineWidth', 2); 
 plot(Pd(2), Pd(1), '^', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'green', 'MarkerSize', 10);
-legend('Measurements','Ground truth', 'Filter Prediction', 'Dock location', 'Location', 'best'); 
+plot(tand(Pd(3))*linspace(Pd(1)-30, Pd(1), 10) + Pd(2) - tand(Pd(3))*Pd(1), linspace(Pd(1)-30, Pd(1), 10), 'b--', 'LineWidth', 2);
+legend('Ground truth', 'Filter Prediction', 'Dock location', 'Location', 'best'); 
 xlabel('East y [m]'); ylabel('North x [m]');
 figure; hold on; grid on;
 plot(x_dock(2,:),x_dock(1,:),'*')

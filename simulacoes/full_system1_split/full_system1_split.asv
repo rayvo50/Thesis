@@ -2,13 +2,13 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [100,120,179];
-P0 = [0,0,0];
+Pd = [100,120,170];
+P0 = [0,50,0];
 Dt=0.1;
 
 
 % filter design
-R_nav = .1*eye(4);
+R_nav = 1000*eye(4);
 Q_nav = [1,  0.1, 0,  0   0;
         0.1, 1,   0,  0,  0;
         0,   0,   1,  0,  0;
@@ -80,17 +80,22 @@ for k=2:length(t)
     % ============ Aply control to the plant ==============================
     x(:,k) = model(x(:,k-1), u(:,k), Dt);
     if sqrt((x(1,k)-Pd(1))^2 +(x(2,k)-Pd(2))^2) < 0.2
-        endidx = l
         break
     end
 end
+x = x(:,2:k);
+x_nav = x_nav(:,2:k);
+x_dock = x_dock(:,2:k);
+y = y(:,2:k);
+temp = temp(:,2:k);
 
 % plots
 figure; hold on; grid on;
-plot(y(2,:), y(1,:));
+%plot(y(2,:), y(1,:));
 plot(x(2,:), x(1,:), 'LineWidth', 2); 
 plot(x_nav(2,:), x_nav(1,:), 'LineWidth', 2); 
 plot(Pd(2), Pd(1), '^', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'green', 'MarkerSize', 10);
+plot(tand(Pd(3))*linspace(Pd(1)-30, Pd(1), 10) + Pd(2) - tand(Pd(3))*Pd(1), linspace(Pd(1)-30, Pd(1), 10), 'b--', 'LineWidth', 2);
 legend('Measurements','Ground truth', 'Filter Prediction', 'Dock location', 'Location', 'best'); 
 xlabel('East y [m]'); ylabel('North x [m]');
 figure; hold on; grid on;
