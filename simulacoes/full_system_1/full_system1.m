@@ -27,8 +27,6 @@ P = [1,   0.1, 0,  0,  0,   0,   0,   0;
      0,   0,   0,  0,  0,   0,   0,   1];
 
 
-
-
 %% simulation
 % initializations
 t = 0:Dt:20;
