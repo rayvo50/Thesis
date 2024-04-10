@@ -2,7 +2,7 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [100,120,170];
+Pd = [-100,120,-45];
 P0 = [0,50,0];
 Dt=0.1;
 
@@ -16,9 +16,9 @@ Q_nav = [1,  0.1, 0,  0   0;
         0,   0,   0,  0,  0.01];
 P_nav = Q_nav;
 R_dock = 1*eye(3);
-Q_dock = [  0.1,   0, 0;
-            0, 0.1,   0;
-            0,   0,   1];
+Q_dock = [  1,   0, 0;
+            0, 1,   0;
+            0,   0,   10];
 P_dock = [  100,   10, 0;
             10, 100,   0;
             0,   0,   100];
@@ -42,6 +42,7 @@ e_dock = zeros(3, length(t));
 temp=zeros(3,length(t));
 
 y = zeros(7,length(t));
+stage=ones(size(t));
 for k=2:length(t)
     % =============== Read sensors ========================================
     y_ = measure(x(:,k-1),Pd);
@@ -76,7 +77,7 @@ for k=2:length(t)
     P_dock = (eye(3) - K*H)*P_dock_;
 
     % ============ Compute control ========================================
-    u(:,k) = los_controller([x_nav(:,k); x_dock(:,k)]);
+    [u(:,k), stage(k)] = los_controller([x_nav(:,k); x_dock(:,k)], stage(k-1));
 
     % ============ Aply control to the plant ==============================
     x(:,k) = model(x(:,k-1), u(:,k), Dt);
@@ -94,23 +95,37 @@ temp = temp(:,2:k);
 figure; hold on; grid on;
 %plot(y(2,:), y(1,:));
 plot(x(2,:), x(1,:), 'LineWidth', 2); 
-plot(x_nav(2,:), x_nav(1,:), 'LineWidth', 2); 
+plot(x_nav(2,:), x_nav(1,:), 'LineWidth', 1); 
 plot(Pd(2), Pd(1), '^', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'green', 'MarkerSize', 10);
-plot(tand(Pd(3))*linspace(Pd(1)-30, Pd(1), 10) + Pd(2) - tand(Pd(3))*Pd(1), linspace(Pd(1)-30, Pd(1), 10), 'b--', 'LineWidth', 2);
+plot([Pd(2),Pd(2)+50*sind(Pd(3))], [Pd(1),Pd(1)+50*cosd(Pd(3))], 'b--', 'LineWidth', 2);
 legend('Ground truth', 'Filter Prediction', 'Dock location', 'Location', 'best'); 
 xlabel('East y [m]'); ylabel('North x [m]');
 figure; hold on; grid on;
 plot(x_dock(2,:),x_dock(1,:),'*')
 figure; hold on; grid on;
-plot(x_dock(3,:))
+plot(zeros(size(x_dock(3,:)))+wrapTo180(Pd(3)));plot(x_dock(3,:));
+title('Dock Yaw');
+legend('Real', 'Filter Prediction', 'Location', 'best'); 
 figure; hold on; grid on;
 plot(y(5,:))
 plot(temp(1,:))
+legend('Measured', 'Filter Prediction', 'Location', 'best'); 
+title('Range');
 figure; hold on; grid on;
 plot(y(6,:))
 plot(temp(2,:))
+legend('Measured', 'Filter Prediction', 'Location', 'best'); 
+title('AUV Bearing');
 figure; hold on; grid on;
 plot(y(7,:))
 plot(temp(3,:))
+legend('Measured', 'Filter Prediction', 'Location', 'best'); 
+title('Dock Bearing');
+figure; hold on; grid on;
+plot(stage(2:k))
+title('Controller state');
+figure; hold on; grid on;
+plot(u(2,2:k))
+title('Yaw desired');
 
 

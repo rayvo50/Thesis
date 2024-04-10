@@ -1,8 +1,8 @@
 function y = measure(x, Pd)
     position_noise = 0.5;
     compass_noise = 2;
-    range_noise = 0.5;
-    bearing_noise = 1;
+    range_noise = 0;
+    bearing_noise = 0;
     dvl_noise = 0.005;
     gyro_bias = 0;
     y = zeros(8,1);
