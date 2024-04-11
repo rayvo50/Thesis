@@ -2,18 +2,20 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [-100,120,-45];
+Pd = [100,120,-135];
 P0 = [0,50,0];
 Dt=0.1;
 
 
 % filter design
+
+
 R_nav = 10*eye(4);
-Q_nav = [1,  0.1, 0,  0   0;
-        0.1, 1,   0,  0,  0;
-        0,   0,   0.1,  0,  0;
-        0,   0,   0,  1,  0;  
-        0,   0,   0,  0,  0.01];
+Q_nav = [1,  0.1, 0,   0   0;
+        0.1, 1,   0,   0,  0;
+        0,   0,   0.1, 0,  0;
+        0,   0,   0,   1,  0;  
+        0,   0,   0,   0,  0.01];
 P_nav = Q_nav;
 R_dock = 1*eye(3);
 Q_dock = [  1,   0, 0;
@@ -26,7 +28,7 @@ P_dock = [  100,   10, 0;
 
 %% simulation
 % initializations
-t = 0:Dt:200;
+t = 0:Dt:100;
 x = zeros(5,length(t));
 x(:,1) = [P0(1),P0(2),0,P0(3),0]';
 u = zeros(2, length(t));
@@ -37,7 +39,7 @@ x_nav(:,1) = [y0(1:4);0];
 e_nav = zeros(4, length(t));
 
 x_dock = zeros(3,length(t));
-x_dock(:,1) = [0.1;0.1;0];
+x_dock(:,1) = [Pd(1)+10*randn();Pd(2)+10*randn();0];
 e_dock = zeros(3, length(t));
 temp=zeros(3,length(t));
 
@@ -81,8 +83,9 @@ for k=2:length(t)
 
     % ============ Aply control to the plant ==============================
     x(:,k) = model(x(:,k-1), u(:,k), Dt);
-    if sqrt((x(1,k)-Pd(1))^2 +(x(2,k)-Pd(2))^2) < 1
+    if sqrt((x(1,k)-Pd(1))^2 +(x(2,k)-Pd(2))^2) < 5
         break
+        
     end
 end
 x = x(:,2:k);
