@@ -37,7 +37,7 @@ function [u, stage_] = los_controller(x, stage)
         y_ = m1*x_ +b1;
         
         cross_track = abs(m1*x(1)-x(2)+b1)/sqrt(m1^2+1);
-        Delta = K_delta*Delta_max*exp(-cross_track);
+        Delta = K_delta*Delta_max;%*exp(-cross_track);
         x_los = x_ + Delta*cosd(x(8)+180);
         y_los = y_ + Delta*sind(x(8)+180);
         
