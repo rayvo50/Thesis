@@ -13,7 +13,7 @@ function y = measure(x, Pd)
     y(3) = x(3) + compass_noise*randn(size(x(1)));
     % dvl velocities
     y(4) = x(4) + dvl_noise*randn(size(x(1)));
-    y(5) = x(4) + dvl_noise*randn(size(x(1)));
+    y(5) = x(5) + dvl_noise*randn(size(x(1)));
     % USBL measurements
     P_DB = [Pd(1)-x(1);Pd(2)-x(2)];
     USBL_B = Rot(x(3))*P_DB;
@@ -22,6 +22,10 @@ function y = measure(x, Pd)
     y(7) = USBL_B(2); 
     y(8) = USBL_D(1);
     y(9) = USBL_D(2);
+    % y(6) = sqrt(USBL_B(1)^2+USBL_B(2)^2);
+    % y(7) = atan2d(USBL_B(2),USBL_B(1));
+    % y(8) = sqrt(USBL_D(1)^2+USBL_D(2)^2);
+    % y(9) = atan2d(USBL_D(2),USBL_D(1));
 
     % y(5) = sqrt((x(1)-Pd(1))^2 + (x(2)-Pd(2))^2) + range_noise*randn(size(x(1)));
     % if y(5) < 20000

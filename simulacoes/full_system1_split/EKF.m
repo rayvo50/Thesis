@@ -20,10 +20,10 @@ classdef EKF
     end
     
     methods
-        function obj = EKF(X0,P1_0,P2_0,P3_0,P4_0, P1,Q1,P2,Q2,P3,Q3, P4,Q4, Dt)
+        function obj = EKF(X0, Dt)
             % Initial 
             obj.X = X0;
-            % inter filter covariances initialization
+            % internal filter covariances initialization
             obj.P1_ = P1_0;
             obj.P2_ = P2_0;
             obj.P3_ = P3_0;
@@ -74,26 +74,30 @@ classdef EKF
         function x_hat = update(obj, y)
             % horizontal filter
             obj.X(1:4) = obj.x_pred(1:4) + obj.K1*(y(1:2) - C*obj.x_pred(1:4));
-            obj.P1_ = (eye(4) - K*C)*obj.P1_;
+            obj.P1_ = (eye(4) - obj.K1*C)*obj.P1_;
             
             % rotational filter
             obj.X(5) = obj.x_pred(5) + obj.K2*(y(5) - obj.x_pred(5));
-            obj.P2_ = (1 - K2)*obj.P2_;
+            obj.P2_ = (1 - obj.K2)*obj.P2_;
 
             % dock position estimate filter
-            % TODO: finish implement this
-            d  = 
-            H = [obj.X]
-H =  [eye(4),[0,0,0,0]']; 
-    K = (P_nav_*H')*inv(H*P_nav_*H' + R_nav);
-    e_nav(:,k) = y(1:4,k) - H*x_nav_;
-    x_nav(:,k) = x_nav_ + K*e_nav(:,k);
-             % dock orientation estimate filter
-            x_hat(6) = obj.X(6);
-
-            % current estimation filter
-            % not active
+            d  = sqrt((obj.X(1)-obj.X(7))^2 + (obj.X(2)-obj.X(8))^2 );
+            H = [(obj.X(6)-obj.X(1))/d, (obj.X(7)-obj.X(1))/d;
+                (obj.X(2)-obj.X(7))/d^2, (obj.X(6)-obj.X(1))/d^2];
             
+            K3 = (obj.P3_*H')*inv(H*obj.P3*H' + obj.Q3);
+            y_ = [sqrt(y(6)^2+y(7)^2); atan2d(y(7),y(6))];
+            hx_ = [sqrt( (obj.X(1)-obj.X(6))^2 + (obj.X(2)-obj.X(7))^2 ); atan2d((obj.X(7)-obj.X(2)), (obj.X(6)-obj.X(1))) - obj.X(8)];
+            obj.X(6:7) = obj.x_pred(6:7) + K3*(y_-hx_);
+            obj.P3_ = (eye(2) - K3*H)*obj.P3_;
+            
+            % dock orientation estimate filter
+            r1 = -dot(y(8:9),y(6:7));
+            r2 = [0,0,1]*cross([y(8:9);0],[y(6:7);0]);
+            y_ = atan2d(r2,r1) + obj.X(5);
+            obj.X(8) = obj.x_pred(8) + obj.K4*(y_ - obj.x_pred(8));
+            obj.P4_ = (1 - obj.K4)*obj.P4_;
+             
         end
     end
 end
