@@ -1,13 +1,13 @@
 function [u, stage_] = los_controller(x, stage)
-    Delta_max =10;
-    K_delta = 1;
+    K_delta = 1000;
+    Ke=-1;
     alpha = 45;
     stage_=stage;
     home_D = 30;
     R = 20;
-        
+    atan2d(x(2)-x(7), x(1)-x(6));
     % check if in "entering zone"
-    if abs(atan2d(x(2)-x(7), x(1)-x(6))+ x(8))<=alpha
+    if abs(atan2d(x(2)-x(7), x(1)-x(6)) - x(8))<=alpha
         stage=2;
         stage_=2;
     end
@@ -20,7 +20,7 @@ function [u, stage_] = los_controller(x, stage)
         if abs( (y_home-x(2))*x(6) - (x_home-x(1))*x(7) + x_home*x(2) - y_home*x(1) )/( sqrt((y_home-x(2))^2 + (x_home-x(1))^2)) < R
             gamma = asind(R/sqrt((x(1)-x(6))^2 + (x(2)-x(7))^2));
             beta = atan2d(x(7)-x(2),x(6)-x(1));
-            yaw_des = beta-gamma
+            yaw_des = beta-gamma;
         else
             yaw_des = atan2d(y_home-x(2),x_home-x(1));
         end
@@ -36,12 +36,12 @@ function [u, stage_] = los_controller(x, stage)
         x_ = (b2-b1)/(m1-m2);
         y_ = m1*x_ +b1;
         
-        cross_track = abs(m1*x(1)-x(2)+b1)/sqrt(m1^2+1);
-        Delta = K_delta*Delta_max;%*exp(-cross_track);
+        cross_track = (m1*x(1)-x(2)+b1)/sqrt(m1^2+1);
+        Delta = min(K_delta*exp(-cross_track), 5);
         x_los = x_ + Delta*cosd(x(8)+180);
         y_los = y_ + Delta*sind(x(8)+180);
         
-        yaw_des = atan2d(y_los-x(2),x_los-x(1));
+        yaw_des = atan2d(y_los-x(2),x_los-x(1)) + Ke*cross_track;
     
         u= [0.3;yaw_des];
     end

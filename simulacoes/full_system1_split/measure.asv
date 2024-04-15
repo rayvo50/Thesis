@@ -15,8 +15,8 @@ function y = measure(x, Pd)
     
     % USBL measurements
     P_DB = [Pd(1)-x(1);Pd(2)-x(2)];
-    USBL_B = Rot(-x(3))*P_DB;
-    USBL_D = -Rot(-Pd(3))*P_DB;
+    USBL_B = Rot(x(3))*P_DB;
+    USBL_D = -Rot(Pd(3))*P_DB;
     y(4) = USBL_B(1);
     y(5) = USBL_B(2); 
     y(6) = USBL_D(1);

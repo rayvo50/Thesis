@@ -2,9 +2,10 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [100,120,-20];
+Pd = [100,120,-135];
 P0 = [0,50,0,0]';
 Dt=0.1;
+
 
 
 %% simulation
@@ -35,7 +36,8 @@ for k=2:length(t)
     debug(:,k) = ekf.debug;
 
     % ============ Compute control ========================================
-    [u(:,k), stage(k)] = los_controller(x_hat(:,k), stage(k-1));
+    %[u(:,k), stage(k)] = los_controller(x_hat(:,k), stage(k-1));
+    u(:,k) = controller(x,Pd);
 
     % ============ Aply control to the plant ==============================
     x(:,k) = model(x(:,k-1), u(:,k), Dt);
@@ -73,8 +75,8 @@ title('Dock Yaw');
 legend('Real', 'Filter Prediction', 'Location', 'best'); 
 
 figure; hold on; grid on;
-plot(x(3,:));plot(x_hat(5,:));
-title('Yaw');
+plot(zeros(size(t))+wrapTo180(Pd(3)));plot(x_hat(8,:));
+title('Dock Yaw');
 legend('Real', 'Filter Prediction', 'Location', 'best'); 
 
 % figure; hold on; grid on;
@@ -95,9 +97,9 @@ legend('Real', 'Filter Prediction', 'Location', 'best');
 % legend('Measured', 'Filter Prediction', 'Location', 'best'); 
 % title('Dock Bearing');
 % 
-figure; hold on; grid on;
-plot(stage(2:k))
-title('Controller state');
+% figure; hold on; grid on;
+% plot(stage(2:k))
+% title('Controller state');
 % 
 % figure; hold on; grid on;
 % plot(u(2,2:k))
