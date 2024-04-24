@@ -1,6 +1,4 @@
 classdef EKF < handle
-    % filter
-
     properties
         X
         Dt
@@ -14,34 +12,49 @@ classdef EKF < handle
         Q3
         R4
         Q4
+        R5
+        Q5
+        R6
+        Q6
         P1
         P2
         P3
         P4
+        P5
+        P6
         K1
         K2
         K3
         K4
+        K5
+        K6
         debug
+        
     end
     
     methods
         function obj = EKF(X0, Dt)
             obj.Dt = Dt;
-            obj.x_pred = zeros(8,1);
+            obj.x_pred = zeros(11,1);
             % filter covariances
             % AUV horizontal
-            obj.R1 = eye(2); 
+            obj.R1 = 1000*eye(2); 
             obj.Q1 = kron([1,0;0,0.001],eye(2));
             % AUV Rotational
-            obj.R2 = 0.1;
+            obj.R2 = 100;
             obj.Q2 = 1;
             % DS horizontal
             obj.R3 = 2*eye(2);
             obj.Q3 = eye(2);
             % DS Orientation
-            obj.R4 = 1;
-            obj.Q4 = 0.001;
+            obj.R4 = 10;
+            obj.Q4 = 0.005;
+            % AUV in DS horizontal
+            obj.R5 = 100*[1,0.5;0.5,1];
+            obj.Q5 = eye(2);
+            % AUV in DS Orientation
+            obj.R6 = 100;
+            obj.Q6 = 0.01;
 
 
             % Initialization 
@@ -50,7 +63,10 @@ classdef EKF < handle
             obj.P1 = eye(4);
             obj.P2 = 1;
             obj.P3 = eye(2);
-            obj.P4 = 1;
+            obj.P4 = 10;
+            obj.P5 = eye(2);
+            obj.P6 = 1;
+
 
             
             % solve for linear kf for horizontal filter
@@ -59,15 +75,20 @@ classdef EKF < handle
             obj.K2 = dlqe(1,1,1, obj.Q2, obj.R2);
             % solve for linear kf for dock yaw
             obj.K4 = dlqe(1,1,1, obj.Q4, obj.R4);
-            
-            obj.debug = zeros(4,1);
+            % solve for linear kf for relative position
+            obj.K5 = dlqe(eye(2),eye(2),eye(2), obj.Q5, obj.R5);
+            % solve for linear kf for relative yaw
+            obj.K6 = dlqe(1,1,1, obj.Q6, obj.R6);
+
+            obj.debug = zeros(2,1);
         end
         
         function obj = predict(obj, input)
             %horizontal filter
+            dvl = [input*cosd(obj.X(5));input*sind(obj.X(5))];
             A = eye(4)+kron([0,obj.Dt;0,0],eye(2));
             B = kron([obj.Dt;0],eye(2));
-            obj.x_pred(1:4) = A*obj.X(1:4)+B*input;
+            obj.x_pred(1:4) = A*obj.X(1:4)+B*dvl;
             obj.P1 = A*obj.P1*A' + obj.Q1;
             
             % rotational filter
@@ -80,7 +101,18 @@ classdef EKF < handle
             
             % dock orientation estimate filter
             obj.x_pred(8) = obj.X(8);
-            obj.P4 = obj.P4 + obj.Q4;     
+            obj.P4 = obj.P4 + obj.Q4;
+
+            % relative position estimate filter
+            dvl = [input*cosd(obj.X(11));input*sind(obj.X(11))];
+            A = eye(2);
+            B = obj.Dt*eye(2);
+            obj.x_pred(9:10) = A*obj.X(9:10)+B*dvl;
+            obj.P5 = obj.P5 + obj.Q5;
+
+            % relative orientation estimate filter
+            obj.x_pred(11) = obj.X(11);
+            obj.P6 = obj.P6 + obj.Q6;  % TODO: add gyro as input
         end
 
         function obj = update(obj, y)
@@ -100,8 +132,8 @@ classdef EKF < handle
 
             obj.K3 = (obj.P3*H')/(H*obj.P3*H' + obj.R3);
             y_ = [sqrt(y(4)^2+y(5)^2); atan2d(y(5),y(4))];
+            obj.debug = y_;
             hx_ = [sqrt( (obj.X(1)-obj.X(6))^2 + (obj.X(2)-obj.X(7))^2 ); wrapTo180(atan2d((obj.X(7)-obj.X(2)), (obj.X(6)-obj.X(1))) - obj.X(5))];
-            obj.debug = [y_;hx_];
             obj.X(6:7) = obj.x_pred(6:7) + obj.K3*(y_-hx_);
             obj.P3 = (eye(2) - obj.K3*H)*obj.P3;
             
@@ -111,8 +143,22 @@ classdef EKF < handle
             y_ = -atan2d(r2,r1) + obj.X(5);
             obj.X(8) = wrapTo180( obj.x_pred(8) + obj.K4*(wrapTo180(y_-obj.x_pred(8))));
             obj.P4 = (1 - obj.K4)*obj.P4;
-
             
+            % relative position estimate filter
+            y_ = (-Rot(obj.X(11))*y(4:5) + y(5:6))/2; 
+            hx_ = obj.x_pred(9:10);
+                 %obj.debug = [y_;hx_];
+            obj.X(9:10) = obj.x_pred(9:10) + obj.K5*(y_-hx_);
+            obj.P5 = (eye(2) - obj.K5*H)*obj.P5;
+
+            % relative orientation estimate filter
+            r1 = -dot(y(6:7),y(4:5));
+            r2 = [0,0,1]*cross([y(6:7);0],[y(4:5);0]); 
+            y_ = atan2d(r2,r1);
+            obj.X(11) = wrapTo180( obj.x_pred(11) + obj.K6*(wrapTo180(y_-obj.x_pred(11))));
+            obj.P6 = (1 - obj.K5)*obj.P6;
+
+
              
         end
     end
