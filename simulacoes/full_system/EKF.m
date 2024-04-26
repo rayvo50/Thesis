@@ -44,11 +44,11 @@ classdef EKF < handle
             obj.R2 = 100;
             obj.Q2 = 1;
             % DS horizontal
-            obj.R3 = 2*eye(2);
-            obj.Q3 = eye(2);
+            obj.R3 = eye(2);
+            obj.Q3 = 0.01*eye(2);
             % DS Orientation
             obj.R4 = 10;
-            obj.Q4 = 0.005;
+            obj.Q4 = 0.001;
             % AUV in DS horizontal
             obj.R5 = 100*[1,0.5;0.5,1];
             obj.Q5 = eye(2);
@@ -84,16 +84,17 @@ classdef EKF < handle
         end
         
         function obj = predict(obj, input)
+            % rotational filter
+            obj.x_pred(5) = obj.X(5);
+            obj.P2 = obj.P2 + obj.Q2;
+
+           
             %horizontal filter
             dvl = [input*cosd(obj.X(5));input*sind(obj.X(5))];
             A = eye(4)+kron([0,obj.Dt;0,0],eye(2));
             B = kron([obj.Dt;0],eye(2));
             obj.x_pred(1:4) = A*obj.X(1:4)+B*dvl;
             obj.P1 = A*obj.P1*A' + obj.Q1;
-            
-            % rotational filter
-            obj.x_pred(5) = obj.X(5);
-            obj.P2 = obj.P2 + obj.Q2;
 
             % dock position estimate filter
             obj.x_pred(6:7) = obj.X(6:7);
@@ -101,7 +102,7 @@ classdef EKF < handle
             
             % dock orientation estimate filter
             obj.x_pred(8) = obj.X(8);
-            obj.P4 = obj.P4 + obj.Q4;
+            %obj.P4 = obj.P4 + obj.Q4;
 
             % relative position estimate filter
             dvl = [input*cosd(obj.X(11));input*sind(obj.X(11))];
@@ -122,7 +123,7 @@ classdef EKF < handle
             obj.P1 = (eye(4) - obj.K1*C)*obj.P1;
             
             % rotational filter
-            obj.X(5) = obj.x_pred(5) + obj.K2*(y(3) - obj.x_pred(5));
+            obj.X(5) = wrapTo180(obj.x_pred(5) + obj.K2*wrapTo180((y(3) - obj.x_pred(5))));
             obj.P2 = (1 - obj.K2)*obj.P2;
 
             % dock position estimate filter
@@ -140,7 +141,7 @@ classdef EKF < handle
             % dock orientation estimate filter
             r1 = -dot(y(6:7),y(4:5));
             r2 = [0,0,1]*cross([y(6:7);0],[y(4:5);0]);
-            y_ = -atan2d(r2,r1) + obj.X(5);
+            y_ = wrapTo180(-atan2d(r2,r1) + obj.X(5));
             obj.X(8) = wrapTo180( obj.x_pred(8) + obj.K4*(wrapTo180(y_-obj.x_pred(8))));
             obj.P4 = (1 - obj.K4)*obj.P4;
             
@@ -156,7 +157,7 @@ classdef EKF < handle
             r2 = [0,0,1]*cross([y(6:7);0],[y(4:5);0]); 
             y_ = atan2d(r2,r1);
             obj.X(11) = wrapTo180( obj.x_pred(11) + obj.K6*(wrapTo180(y_-obj.x_pred(11))));
-            obj.P6 = (1 - obj.K5)*obj.P6;
+            obj.P6 = (1 - obj.K6)*obj.P6;
 
 
              

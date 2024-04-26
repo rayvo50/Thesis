@@ -2,7 +2,7 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [50,50,45];
+Pd = [20,10,0];
 P0 = [0,0,0,0]';
 Dt=0.1;
 Vc = [0,0];
@@ -10,7 +10,7 @@ Vc = [0,0];
 
 %% simulation
 % initializations
-t = 0:Dt:500;
+t = 0:Dt:1000;
 
 % state for dynamics/kinematics modeling
 x = zeros(4,length(t));
@@ -18,8 +18,7 @@ x(:,1) = P0;
 u = zeros(2, length(t));
 y = zeros(9,length(t));
 
-controller = LOS_controller();
-controller.output
+controller = LOS_Controller(Dt);
 
 y0 = measure(x(:,1),Pd);
 X0 = [y0(1),y0(2),0,0,y0(3), 10, 10, 0,1,1,1]';
@@ -29,7 +28,7 @@ debug = zeros(2,length(t));
 dock_yaw_cov = zeros(1,length(t));
 dock_pos_cov = zeros(4,length(t));
 
-stage = ones(size(t));
+state = ones(size(t));
 for k=2:length(t)
     % =============== Read sensors ========================================
     y(:,k) = measure(x(:,k-1),Pd);
@@ -45,6 +44,7 @@ for k=2:length(t)
     % ============ Compute control ========================================
     controller.compute(x_hat(:,k), y(:,k));
     u(:,k) = controller.output;
+    state(k) = controller.state; 
 
     % ============ Aply control to the plant ==============================
     x(:,k) = model(x(:,k-1), u(:,k), Dt,Vc);
@@ -82,9 +82,11 @@ figure; hold on; grid on;
 plot(x(2,:), x(1,:), 'LineWidth', 2); 
 plot(x_hat(2,:), x_hat(1,:), 'LineWidth', 1); 
 plot(Pd(2), Pd(1), '^', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'green', 'MarkerSize', 10);
+plot(Pd(2)+25*sind(Pd(3)),Pd(1)+25*cosd(Pd(3)), 'x', 'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'red', 'MarkerSize', 10);
 plot([Pd(2),Pd(2)+50*sind(Pd(3))], [Pd(1),Pd(1)+50*cosd(Pd(3))], 'b--', 'LineWidth', 2);
-legend('Ground truth', 'Filter Prediction', 'Dock location','Path', 'Location', 'best'); 
+legend('Ground truth', 'Filter Prediction', 'Dock location','Homing point','Path', 'Location', 'best'); 
 xlabel('East y [m]'); ylabel('North x [m]');
+axis equal;
 
 % figure; hold on; grid on;
 % plot(zeros(size(t))+wrapTo180(Pd(3)));plot(x_hat(8,:));
@@ -121,7 +123,7 @@ hold off;
 % title('Dock Bearing');
 % 
 figure; hold on; grid on;
-plot(stage(2:k))
+plot(state(2:k))
 title('Controller state');
 % 
 % figure; hold on; grid on;

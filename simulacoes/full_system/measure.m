@@ -1,7 +1,7 @@
 function y = measure(x, Pd)
-    position_noise = 0.01;
+    position_noise = 0.5;
     compass_noise = 1;
-    dvl_noise = 0.01;
+    dvl_noise = 0.001;
     gyro_bias = 0;
     y = zeros(9,1);
 
@@ -25,7 +25,7 @@ function y = measure(x, Pd)
     % y(9) = atan2d(USBL_D(2),USBL_D(1));
 
     % dvl velocities
-    y(8) = x(4) + dvl_noise*randn();
+    y(8) = x(4);%*cosd(x(3)) + dvl_noise*randn();
     %y(9) = x(4)*sind(x(3)) + dvl_noise*randn();
 
 end
