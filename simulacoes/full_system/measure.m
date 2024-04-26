@@ -23,9 +23,11 @@ function y = measure(x, Pd)
     % y(7) = atan2d(USBL_B(2),USBL_B(1));
     % y(8) = sqrt(USBL_D(1)^2+USBL_D(2)^2);
     % y(9) = atan2d(USBL_D(2),USBL_D(1));
-
+    
+    % rate gyro
+    y(8) = x(5); 
     % dvl velocities
-    y(8) = x(4);%*cosd(x(3)) + dvl_noise*randn();
-    %y(9) = x(4)*sind(x(3)) + dvl_noise*randn();
-
+    y(9) = x(4);%*cosd(x(3)) + dvl_noise*randn();
+    %y(10) = x(4)*sind(x(3)) + dvl_noise*randn();
+    
 end

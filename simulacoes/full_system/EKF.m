@@ -48,9 +48,9 @@ classdef EKF < handle
             obj.Q3 = 0.01*eye(2);
             % DS Orientation
             obj.R4 = 10;
-            obj.Q4 = 0.001;
+            obj.Q4 = 0.01;
             % AUV in DS horizontal
-            obj.R5 = 100*[1,0.5;0.5,1];
+            obj.R5 = 1000*[1,0.5;0.5,1];
             obj.Q5 = eye(2);
             % AUV in DS Orientation
             obj.R6 = 100;
@@ -63,7 +63,7 @@ classdef EKF < handle
             obj.P1 = eye(4);
             obj.P2 = 1;
             obj.P3 = eye(2);
-            obj.P4 = 10;
+            obj.P4 = 100;
             obj.P5 = eye(2);
             obj.P6 = 1;
 
@@ -85,12 +85,11 @@ classdef EKF < handle
         
         function obj = predict(obj, input)
             % rotational filter
-            obj.x_pred(5) = obj.X(5);
+            obj.x_pred(5) = wrapTo180(obj.X(5) + input(1)*obj.Dt);
             obj.P2 = obj.P2 + obj.Q2;
 
-           
             %horizontal filter
-            dvl = [input*cosd(obj.X(5));input*sind(obj.X(5))];
+            dvl = [input(2)*cosd(obj.X(5));input(2)*sind(obj.X(5))];
             A = eye(4)+kron([0,obj.Dt;0,0],eye(2));
             B = kron([obj.Dt;0],eye(2));
             obj.x_pred(1:4) = A*obj.X(1:4)+B*dvl;
@@ -102,18 +101,18 @@ classdef EKF < handle
             
             % dock orientation estimate filter
             obj.x_pred(8) = obj.X(8);
-            %obj.P4 = obj.P4 + obj.Q4;
+            obj.P4 = obj.P4 + obj.Q4;
 
             % relative position estimate filter
-            dvl = [input*cosd(obj.X(11));input*sind(obj.X(11))];
+            dvl = [input(2)*cosd(obj.X(11));input(2)*sind(obj.X(11))];
             A = eye(2);
             B = obj.Dt*eye(2);
             obj.x_pred(9:10) = A*obj.X(9:10)+B*dvl;
             obj.P5 = obj.P5 + obj.Q5;
 
             % relative orientation estimate filter
-            obj.x_pred(11) = obj.X(11);
-            obj.P6 = obj.P6 + obj.Q6;  % TODO: add gyro as input
+            obj.x_pred(11) = wrapTo180(obj.X(11) + input(1)*obj.Dt);
+            obj.P6 = obj.P6 + obj.Q6; 
         end
 
         function obj = update(obj, y)
@@ -146,7 +145,8 @@ classdef EKF < handle
             obj.P4 = (1 - obj.K4)*obj.P4;
             
             % relative position estimate filter
-            y_ = (-Rot(obj.X(11))*y(4:5) + y(5:6))/2; 
+            y_ = (-Rot(obj.X(11))*y(4:5) + y(6:7))/2; 
+            %y_ = [y(6);y(5)];
             hx_ = obj.x_pred(9:10);
                  %obj.debug = [y_;hx_];
             obj.X(9:10) = obj.x_pred(9:10) + obj.K5*(y_-hx_);
