@@ -1,5 +1,4 @@
 function x_new = model(x,u,Dt, Vc, Pd)
-    % parameters
     K=1;
     tau_surge = 2;
     tau_yaw = 2;

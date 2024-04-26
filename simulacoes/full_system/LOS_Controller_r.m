@@ -26,7 +26,7 @@ classdef LOS_Controller_r < handle
             self.R = 20;
             self.Dt = Dt;
 
-            self.state=0;
+            self.state=1;
             self.yaw_corr = 0;
             self.output =[0;0;NaN];
         end
@@ -45,8 +45,8 @@ classdef LOS_Controller_r < handle
                 yaw_home = atan2d(y_home-x(2),x_home-x(1));
                 
                 % obstacle avoidance with bearing measurement:
-                bearing = atan2d(y(5),y(4));
-                distance = sqrt(y(5)^2+y(4)^2);
+                bearing = y(5);
+                distance = y(4);
                 if (0<bearing) && (bearing<45) && (distance<20)
                     phi = (45-bearing)/45*self.K_phi/distance*10;
                     self.yaw_corr = self.yaw_corr - phi*self.Dt;
@@ -68,8 +68,8 @@ classdef LOS_Controller_r < handle
                 yaw_home = atan2d(y_home-x(2),x_home-x(1));
                 
                 % obstacle avoidance with bearing measurement:
-                bearing = atan2d(y(5),y(4));
-                distance = sqrt(y(5)^2+y(4)^2);
+                bearing = y(5);
+                distance = y(4);
                 if (0<bearing) && (bearing<45) && (distance<20)
                     phi = (45-bearing)/45*self.K_phi/distance*10;
                     self.yaw_corr = self.yaw_corr - phi*self.Dt;

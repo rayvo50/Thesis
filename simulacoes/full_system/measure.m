@@ -15,15 +15,20 @@ function y = measure(x, Pd)
     P_DB = [Pd(1)-x(1);Pd(2)-x(2)];
     USBL_B = Rot(-x(3))*P_DB;
     USBL_D = -Rot(-Pd(3))*P_DB;
-    y(4) = USBL_B(1)+position_noise*randn();
-    y(5) = USBL_B(2)+position_noise*randn(); 
-    y(6) = USBL_D(1)+position_noise*randn();
-    y(7) = USBL_D(2)+position_noise*randn();
-    % y(6) = sqrt(USBL_B(1)^2+USBL_B(2)^2);
-    % y(7) = atan2d(USBL_B(2),USBL_B(1));
-    % y(8) = sqrt(USBL_D(1)^2+USBL_D(2)^2);
-    % y(9) = atan2d(USBL_D(2),USBL_D(1));
-    
+    x1 = USBL_B(1)+position_noise*randn();
+    y1 = USBL_B(2)+position_noise*randn(); 
+    x2 = USBL_D(1)+position_noise*randn();
+    y2 = USBL_D(2)+position_noise*randn();
+
+    % y(4:5) = [x1;y1];
+    % y(6:7) = [x2;y2];
+    if sqrt((x(1)-Pd(1))^2 + (x(2)-Pd(2))^2) < 40
+        y(4) = sqrt(x1^2+y1^2);
+        y(5:7) = [NaN;NaN;NaN];
+    else
+        y(4:5) = xy2rb([x1;y1]);
+        y(6:7) = xy2rb([x2;y2]);
+    end
     % rate gyro
     y(8) = x(5); 
     % dvl velocities

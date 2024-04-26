@@ -131,36 +131,38 @@ classdef EKF < handle
                 (obj.X(2)-obj.X(7))/d, (obj.X(6)-obj.X(1))/d];
 
             obj.K3 = (obj.P3*H')/(H*obj.P3*H' + obj.R3);
-            y_ = [sqrt(y(4)^2+y(5)^2); atan2d(y(5),y(4))];
-            obj.debug = y_;
+            y_ = y(4:5);
             hx_ = [sqrt( (obj.X(1)-obj.X(6))^2 + (obj.X(2)-obj.X(7))^2 ); wrapTo180(atan2d((obj.X(7)-obj.X(2)), (obj.X(6)-obj.X(1))) - obj.X(5))];
-            obj.X(6:7) = obj.x_pred(6:7) + obj.K3*(y_-hx_);
+            if ~isnan(y(5))
+                obj.X(6:7) = obj.x_pred(6:7) + obj.K3*(y_-hx_);
+            else
+                obj.X(6:7) = obj.x_pred(6:7) + obj.K3(:,1)*(y_(1)-hx_(1));
+            end
             obj.P3 = (eye(2) - obj.K3*H)*obj.P3;
             
             % dock orientation estimate filter
-            r1 = -dot(y(6:7),y(4:5));
-            r2 = [0,0,1]*cross([y(6:7);0],[y(4:5);0]);
+            usbl_b = rb2xy(y(4:5));
+            usbl_ds = rb2xy(y(6:7));
+            r1 = -dot(usbl_ds,usbl_b );
+            r2 = [0,0,1]*cross([usbl_ds;0],[usbl_b ;0]);
             y_ = wrapTo180(-atan2d(r2,r1) + obj.X(5));
+
             obj.X(8) = wrapTo180( obj.x_pred(8) + obj.K4*(wrapTo180(y_-obj.x_pred(8))));
             obj.P4 = (1 - obj.K4)*obj.P4;
             
             % relative position estimate filter
-            y_ = (-Rot(obj.X(11))*y(4:5) + y(6:7))/2; 
-            %y_ = [y(6);y(5)];
+            y_ = (-Rot(obj.X(11))*usbl_b  + usbl_ds)/2; 
             hx_ = obj.x_pred(9:10);
-                 %obj.debug = [y_;hx_];
             obj.X(9:10) = obj.x_pred(9:10) + obj.K5*(y_-hx_);
             obj.P5 = (eye(2) - obj.K5*H)*obj.P5;
 
             % relative orientation estimate filter
-            r1 = -dot(y(6:7),y(4:5));
-            r2 = [0,0,1]*cross([y(6:7);0],[y(4:5);0]); 
+            r1 = -dot(usbl_ds,usbl_b);
+            r2 = [0,0,1]*cross([usbl_ds;0],[usbl_b;0]); 
             y_ = atan2d(r2,r1);
             obj.X(11) = wrapTo180( obj.x_pred(11) + obj.K6*(wrapTo180(y_-obj.x_pred(11))));
             obj.P6 = (1 - obj.K6)*obj.P6;
-
-
-             
+            
         end
     end
 end

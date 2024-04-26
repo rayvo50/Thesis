@@ -2,7 +2,7 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [20,20,45];
+Pd = [100,100,45];
 P0 = [0,0,0,0,0]';
 Dt=0.1;
 Vc = [0,0];
@@ -49,9 +49,8 @@ for k=2:length(t)
     % ============ Aply control to the plant ==============================
     x(:,k) = model(x(:,k-1), u(:,k), Dt,Vc,Pd);
 
-
+    
     % make cool movie plot
-
     % clf;
     % figure; hold on; grid on;
     % plot(x(2,:), x(1,:), 'LineWidth', 2); 
