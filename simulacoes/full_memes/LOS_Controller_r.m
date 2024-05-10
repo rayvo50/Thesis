@@ -40,9 +40,9 @@ classdef LOS_Controller_r < handle
             
             % homing
             if self.state == 0
-                x_home = x(6) + self.home_D*cos(x(8));
-                y_home = x(7) + self.home_D*sin(x(8));
-                yaw_home = atan2(y_home-x(2),x_home-x(1));
+                x_home = x(6) + self.home_D*cosd(x(8));
+                y_home = x(7) + self.home_D*sind(x(8));
+                yaw_home = atan2d(y_home-x(2),x_home-x(1));
                 
                 % obstacle avoidance with bearing measurement:
                 bearing = y(5);
@@ -63,9 +63,9 @@ classdef LOS_Controller_r < handle
 
             % homing
             elseif self.state == 1
-                x_home = x(6) + self.home_D*cos(x(8));
-                y_home = x(7) + self.home_D*sin(x(8));
-                yaw_home = atan2(y_home-x(2),x_home-x(1));
+                x_home = x(6) + self.home_D*cosd(x(8));
+                y_home = x(7) + self.home_D*sind(x(8));
+                yaw_home = atan2d(y_home-x(2),x_home-x(1));
                 
                 % obstacle avoidance with bearing measurement:
                 bearing = y(5);
@@ -90,7 +90,7 @@ classdef LOS_Controller_r < handle
                 x_los = x(9)-Delta;
                 y_los = 0;
 
-                yaw_des = atan2(y_los-x(10),x_los-x(9));
+                yaw_des = atan2d(y_los-x(10),x_los-x(9));
             
                 self.output = real([0.3;NaN;yaw_des]);
             end

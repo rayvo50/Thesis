@@ -89,7 +89,7 @@ classdef EKF < handle
             obj.P2 = obj.P2 + obj.Q2;
 
             %horizontal filter
-            dvl = [input(2)*cos(obj.X(5));input(2)*sin(obj.X(5))];
+            dvl = [input(2)*cosd(obj.X(5));input(2)*sind(obj.X(5))];
             A = eye(4)+kron([0,obj.Dt;0,0],eye(2));
             B = kron([obj.Dt;0],eye(2));
             obj.x_pred(1:4) = A*obj.X(1:4)+B*dvl;
@@ -104,7 +104,7 @@ classdef EKF < handle
             obj.P4 = obj.P4 + obj.Q4;
 
             % relative position estimate filter
-            dvl = [input(2)*cos(obj.X(11));input(2)*sin(obj.X(11))];
+            dvl = [input(2)*cosd(obj.X(11));input(2)*sind(obj.X(11))];
             A = eye(2);
             B = obj.Dt*eye(2);
             obj.x_pred(9:10) = A*obj.X(9:10)+B*dvl;
@@ -132,7 +132,7 @@ classdef EKF < handle
 
             obj.K3 = (obj.P3*H')/(H*obj.P3*H' + obj.R3);
             y_ = y(4:5);
-            hx_ = [sqrt( (obj.X(1)-obj.X(6))^2 + (obj.X(2)-obj.X(7))^2 ); wrapTo180(atan2((obj.X(7)-obj.X(2)), (obj.X(6)-obj.X(1))) - obj.X(5))];
+            hx_ = [sqrt( (obj.X(1)-obj.X(6))^2 + (obj.X(2)-obj.X(7))^2 ); wrapTo180(atan2d((obj.X(7)-obj.X(2)), (obj.X(6)-obj.X(1))) - obj.X(5))];
             if ~isnan(y(5))
                 obj.X(6:7) = obj.x_pred(6:7) + obj.K3*(y_-hx_);
             else
@@ -145,7 +145,7 @@ classdef EKF < handle
             usbl_ds = rb2xy(y(6:7));
             r1 = -dot(usbl_ds,usbl_b );
             r2 = [0,0,1]*cross([usbl_ds;0],[usbl_b ;0]);
-            y_ = wrapTo180(-atan2(r2,r1) + obj.X(5));
+            y_ = wrapTo180(-atan2d(r2,r1) + obj.X(5));
 
             obj.X(8) = wrapTo180( obj.x_pred(8) + obj.K4*(wrapTo180(y_-obj.x_pred(8))));
             obj.P4 = (1 - obj.K4)*obj.P4;
@@ -159,7 +159,7 @@ classdef EKF < handle
             % relative orientation estimate filter
             r1 = -dot(usbl_ds,usbl_b);
             r2 = [0,0,1]*cross([usbl_ds;0],[usbl_b;0]); 
-            y_ = atan2(r2,r1);
+            y_ = atan2d(r2,r1);
             obj.X(11) = wrapTo180( obj.x_pred(11) + obj.K6*(wrapTo180(y_-obj.x_pred(11))));
             obj.P6 = (1 - obj.K6)*obj.P6;
             

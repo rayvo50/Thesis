@@ -10,7 +10,7 @@ Vc = [0,0];
 
 %% simulation
 % initializations
-t = 0:Dt:10;
+t = 0:Dt:1000;
 
 % state for dynamics/kinematics modeling
 x = zeros(6,length(t));
@@ -34,34 +34,33 @@ dock_pos_cov = zeros(4,length(t));
 debug = zeros(6,length(t));
 state = ones(size(t));
 for k=2:length(t)
-    % =============== Simulate sensors ====================================
+    % =============== Read sensors ========================================
     y(:,k) = measure(x(:,k-1),Pd);
 
     % =============== Filter ==============================================
     ekf = ekf.predict(y(8:9,k));
     ekf = ekf.update(y(1:7,k));
     x_hat(:,k) = ekf.X;
-    % debug(:,k) = ekf.debug;
+    %debug(:,k) = ekf.debug;
     dock_yaw_cov(:,k) = ekf.P4;
     dock_pos_cov(:,k) = ekf.P3(:);
 
     % ============ Compute control ========================================
-    % outer-loop
     controller.compute(x_hat(:,k), y(:,k));
     u(:,k) = controller.output;
     state(k) = controller.state; 
-    % inner-loop
     surge_pid.compute(y(9,k),0.3);
     yaw_pid.compute(x(3,k-1), deg2rad(120), y(8,k));
     debug(:,k) = yaw_pid.debug;
-    tau(1,k) = 3;  %surge_pid.output;
-    tau(2,k) = yaw_pid.output;
+
+    tau(1,k) = 3;%surge_pid.output;
+    tau(2,k) = 15;% yaw_pid.output;
 
     % ============ Aply control to the plant ==============================
-    x(:,k) = model(x(:,k-1), tau(:,k), Dt,Vc);   
+    x(:,k) = model_dyn(x(:,k-1), tau(:,k), Dt,Vc);   
 
     if sqrt((x(1,k)-Pd(1))^2 +(x(2,k)-Pd(2))^2) < 1
-     0;   % break    
+     0;   %break    
     end
 end
 
@@ -74,7 +73,6 @@ dock_pos_cov = dock_pos_cov(:,2:k);
 t = t(:,2:k);
 
 %% plots
-% Trajectory
 figure; hold on; grid on;
 plot(x(2,:), x(1,:), 'LineWidth', 2); 
 plot(x_hat(2,:), x_hat(1,:), 'LineWidth', 1); 

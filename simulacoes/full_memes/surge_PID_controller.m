@@ -1,4 +1,4 @@
-classdef yaw_PID_controller < handle
+classdef surge_PID_controller < handle
     properties
         %parameters:
         K_p
@@ -12,8 +12,8 @@ classdef yaw_PID_controller < handle
 
         %variables:
         first_it
-        yaw_rate_prev
-        yaw_prev
+        surge_rate_prev
+        surge_prev
         g_filter_prev
         u_prev
         u_sat_prev
@@ -22,22 +22,22 @@ classdef yaw_PID_controller < handle
     end
     
     methods
-        function self = yaw_PID_controller()
+        function self = surge_PID_controller()
             % Parameters
-            N_r = -0.5;
-            I_z = 4.14;
+            X_u = -0.2;
+            m_u = 28.5+20;
             self.tau_max = 10.0; % N.m
             a = 10.0; % rad/s
         
-            alpha = 1.0 / I_z;
-            beta = -N_r / I_z;
+            alpha = 1.0 / m_u;
+            beta = -X_u / m_u;
         
             w_n = 0.5; % rad/s
             qsi = 0.7;
             pole = -4;
         
             % self.Dt calculation
-            self.Dt = 0.1;%1.0 / frequency;
+            self.Dt = 0.1; %1.0 / frequency;
         
             self.K_r = (2*qsi*w_n - pole - beta) / alpha;
             self.K_p = w_n * (w_n - 2*pole*qsi) / alpha;
@@ -48,8 +48,8 @@ classdef yaw_PID_controller < handle
             self.lpf_B = 1 - self.lpf_A;
 
             % variables
-            self.yaw_rate_prev=0;
-            self.yaw_prev=0;
+            self.surge_rate_prev = 0;
+            self.surge_prev= 0;
             self.g_filter_prev=0;
             self.u_sat_prev=0;
             self.u_prev=0;
@@ -57,18 +57,19 @@ classdef yaw_PID_controller < handle
             self.output = 0;
         end
         
-        function self = compute(self, yaw,yaw_ref,yaw_rate)
-            error = wrapTo180(yaw_ref - yaw);
-        
+        function self = compute(self, surge,surge_ref)
+            error = wrapTo180(surge_ref - surge);
+            
+            surge_rate = (surge - self.surge_prev)/self.Dt;
             if self.first_it
-                yaw_rate_dot = 0;
-                yaw_dot = 0;
+                surge_rate_dot = 0;
+                surge_dot = 0;
             else
-                yaw_rate_dot = (yaw_rate - self.yaw_rate_prev) / self.Dt;
-                yaw_dot = wrapToPi(yaw - self.yaw_prev) / self.Dt;
+                surge_rate_dot = (surge_rate - self.surge_rate_prev) / self.Dt;
+                surge_dot = wrapToPi(surge - self.surge_prev) / self.Dt;
             end
         
-            g = self.K_r * yaw_rate_dot + self.K_p * yaw_dot;
+            g = self.K_r * surge_rate_dot + self.K_p * surge_dot;
             g_filter = self.lpf_A * self.g_filter_prev + g * self.lpf_B;
         
             u_d = self.K_i * error - g_filter;
@@ -82,12 +83,11 @@ classdef yaw_PID_controller < handle
             else
                 u_sat = u;
             end
-
             self.output = u_sat;
         
             % Update new prev values
-            self.yaw_rate_prev = yaw_rate;
-            self.yaw_prev = yaw;
+            self.surge_rate_prev = surge_rate;
+            self.surge_prev = surge;
             self.g_filter_prev = g_filter;
             self.u_prev = u;
             self.u_sat_prev = u_sat; 
