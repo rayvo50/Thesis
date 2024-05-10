@@ -20,8 +20,8 @@ tau = zeros(2, length(t));
 y = zeros(10,length(t));
 
 controller = LOS_Controller_r(Dt);
-yaw_pid = yaw_PID_controller()
-surge_pid = surge_PID_controller()
+yaw_pid = yaw_PID_controller();
+surge_pid = surge_PID_controller();
 
 y0 = measure(x(:,1),Pd);
 X0 = [y0(1),y0(2),0,0,y0(3), 10, 10, 80,1,1,1]';
@@ -49,15 +49,15 @@ for k=2:length(t)
     u(:,k) = controller.output;
     state(k) = controller.state; 
     surge_pid.compute(y(9,k),0.3);
-    yaw_pid.compute(x_hat(5,k), 120, y(8,k));
-    tau(1,k) = 3;%surge_pid.output;
+    yaw_pid.compute(x_hat(5,k),90, y(8,k));
+    tau(1,k) = surge_pid.output;
     tau(2,k) = yaw_pid.output;
 
     % ============ Aply control to the plant ==============================
     x(:,k) = model_dyn(x(:,k-1), tau(:,k), Dt,Vc);   
 
     if sqrt((x(1,k)-Pd(1))^2 +(x(2,k)-Pd(2))^2) < 1
-     0;   %break    
+        break    
     end
 end
 

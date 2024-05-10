@@ -22,19 +22,17 @@ function y = measure(x, Pd)
 
     % y(4:5) = [x1;y1];
     % y(6:7) = [x2;y2];
-    % if sqrt((x(1)-Pd(1))^2 + (x(2)-Pd(2))^2) < 40
-    %     y(4) = sqrt(x1^2+y1^2);
-    %     y(5:7) = [NaN;NaN;NaN];
-    % else
-    y(4:5) = xy2rb([x1;y1]);
-    y(6:7) = xy2rb([x2;y2]);
-    % end
-
+    if sqrt((x(1)-Pd(1))^2 + (x(2)-Pd(2))^2) > 40
+        y(4) = sqrt(x1^2+y1^2);
+        y(5:7) = [NaN;NaN;NaN];
+    else
+        y(4:5) = xy2rb([x1;y1]);
+        y(6:7) = xy2rb([x2;y2]);
+    end
     % rate gyro
-    y(8) = x(6);
+    y(8) = x(5); 
     % dvl velocities
-    y(9) = x(4);
-    y(10) = x(5);
-    
+    y(9) = x(4);%*cosd(x(3)) + dvl_noise*randn();
+    %y(10) = x(4)*sind(x(3)) + dvl_noise*randn();
     
 end
