@@ -10,7 +10,7 @@ Vc = [0,0];
 
 %% simulation
 % initializations
-t = 0:Dt:10;
+t = 0:Dt:1000;
 
 % state for dynamics/kinematics modeling
 x = zeros(6,length(t));
@@ -51,10 +51,10 @@ for k=2:length(t)
     u(:,k) = controller.output;
     state(k) = controller.state; 
     % inner-loop
-    surge_pid.compute(y(9,k),0.3);
-    yaw_pid.compute(x(3,k-1), deg2rad(120), y(8,k));
+    surge_pid.compute(y(9,k),u(1,k));
+    yaw_pid.compute(x(3,k-1), u(2,k), y(8,k));
     debug(:,k) = yaw_pid.debug;
-    tau(1,k) = 3;  %surge_pid.output;
+    tau(1,k) = surge_pid.output;
     tau(2,k) = yaw_pid.output;
 
     % ============ Aply control to the plant ==============================

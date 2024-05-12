@@ -34,7 +34,7 @@ classdef yaw_PID_controller < handle
             alpha = 1.0 / I_z;
             beta = -N_r / I_z;
         
-            w_n = 1; % rad/s
+            w_n = 10; % rad/s
             qsi = 0.7;
             pole = -4;
         
