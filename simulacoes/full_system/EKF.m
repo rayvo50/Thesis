@@ -111,7 +111,7 @@ classdef EKF < handle
             obj.P5 = obj.P5 + obj.Q5;
 
             % relative orientation estimate filter
-            obj.x_pred(11) = wrapTo180(obj.X(11) + input(1)*obj.Dt);
+            obj.x_pred(11) = wrapToPi(obj.X(11) + input(1)*obj.Dt);
             obj.P6 = obj.P6 + obj.Q6; 
         end
 
@@ -132,7 +132,7 @@ classdef EKF < handle
 
             obj.K3 = (obj.P3*H')/(H*obj.P3*H' + obj.R3);
             y_ = y(4:5);
-            hx_ = [sqrt( (obj.X(1)-obj.X(6))^2 + (obj.X(2)-obj.X(7))^2 ); wrapTo180(atan2((obj.X(7)-obj.X(2)), (obj.X(6)-obj.X(1))) - obj.X(5))];
+            hx_ = [sqrt( (obj.X(1)-obj.X(6))^2 + (obj.X(2)-obj.X(7))^2 ); wrapToPi(atan2((obj.X(7)-obj.X(2)), (obj.X(6)-obj.X(1))) - obj.X(5))];
             if ~isnan(y(5))
                 obj.X(6:7) = obj.x_pred(6:7) + obj.K3*(y_-hx_);
             else
@@ -145,9 +145,9 @@ classdef EKF < handle
             usbl_ds = rb2xy(y(6:7));
             r1 = -dot(usbl_ds,usbl_b );
             r2 = [0,0,1]*cross([usbl_ds;0],[usbl_b ;0]);
-            y_ = wrapTo180(-atan2(r2,r1) + obj.X(5));
+            y_ = wrapToPi(-atan2(r2,r1) + obj.X(5));
 
-            obj.X(8) = wrapTo180( obj.x_pred(8) + obj.K4*(wrapTo180(y_-obj.x_pred(8))));
+            obj.X(8) = wrapToPi( obj.x_pred(8) + obj.K4*(wrapToPi(y_-obj.x_pred(8))));
             obj.P4 = (1 - obj.K4)*obj.P4;
             
             % relative position estimate filter
@@ -160,7 +160,7 @@ classdef EKF < handle
             r1 = -dot(usbl_ds,usbl_b);
             r2 = [0,0,1]*cross([usbl_ds;0],[usbl_b;0]); 
             y_ = atan2(r2,r1);
-            obj.X(11) = wrapTo180( obj.x_pred(11) + obj.K6*(wrapTo180(y_-obj.x_pred(11))));
+            obj.X(11) = wrapToPi( obj.x_pred(11) + obj.K6*(wrapToPi(y_-obj.x_pred(11))));
             obj.P6 = (1 - obj.K6)*obj.P6;
             
         end

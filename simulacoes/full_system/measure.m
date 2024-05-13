@@ -1,6 +1,6 @@
 function y = measure(x, Pd)
     position_noise = 0.5;
-    compass_noise = 1;
+    compass_noise = deg2rad(1);
     dvl_noise = 0.001;
     gyro_bias = 0;
     y = zeros(9,1);

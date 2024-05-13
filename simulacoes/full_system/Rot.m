@@ -1,4 +1,4 @@
 function R = Rot(yaw)
-        R = [cosd(yaw), -sind(yaw);
-             sind(yaw),  cosd(yaw)];
+        R = [cos(yaw), -sin(yaw);
+             sin(yaw),  cos(yaw)];
 end

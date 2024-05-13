@@ -2,7 +2,7 @@
 clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
-Pd = [20,20,45];
+Pd = [20,20,deg2rad(45)];
 P0 = [0,0,0,0,0,0]';
 Dt=0.1;
 Vc = [0,0];
@@ -10,7 +10,7 @@ Vc = [0,0];
 
 %% simulation
 % initializations
-t = 0:Dt:1000;
+t = 0:Dt:200;
 
 % state for dynamics/kinematics modeling
 x = zeros(6,length(t));
@@ -24,14 +24,14 @@ yaw_pid = yaw_PID_controller();
 surge_pid = surge_PID_controller();
 
 y0 = measure(x(:,1),Pd);
-X0 = [y0(1),y0(2),0,0,y0(3), 10, 10, 80,1,1,1]';
+X0 = [y0(1),y0(2),0,0,y0(3), y0(4)*cos(y0(5)+y0(3)), y0(4)*sin(y0(5)+y0(3)), y0(5)+y0(3),1,1,1]';
 ekf = EKF(X0,Dt);
 x_hat = zeros(11,length(t));
 dock_yaw_cov = zeros(1,length(t));
 dock_pos_cov = zeros(4,length(t));
 
 
-debug = zeros(6,length(t));
+debug = zeros(2,length(t));
 state = ones(size(t));
 for k=2:length(t)
     % =============== Simulate sensors ====================================
@@ -48,12 +48,17 @@ for k=2:length(t)
     % ============ Compute control ========================================
     % outer-loop
     controller.compute(x_hat(:,k), y(:,k));
+    debug(:,k)= controller.debug;
     u(:,k) = controller.output;
     state(k) = controller.state; 
+
     % inner-loop
     surge_pid.compute(y(9,k),u(1,k));
-    yaw_pid.compute(x(3,k-1), u(2,k), y(8,k));
-    debug(:,k) = yaw_pid.debug;
+    if isnan(u(2,k))
+        yaw_pid.compute(x(3,k-1), wrapToPi(u(3,k)+Pd(3)), y(8,k))
+    else
+        yaw_pid.compute(x(3,k-1), u(2,k), y(8,k))
+    end
     tau(1,k) = surge_pid.output;
     tau(2,k) = yaw_pid.output;
 
@@ -79,19 +84,19 @@ figure; hold on; grid on;
 plot(x(2,:), x(1,:), 'LineWidth', 2); 
 plot(x_hat(2,:), x_hat(1,:), 'LineWidth', 1); 
 plot(Pd(2), Pd(1), '^', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'green', 'MarkerSize', 10);
-plot(Pd(2)+20*sind(Pd(3)),Pd(1)+20*cosd(Pd(3)), 'x', 'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'red', 'MarkerSize', 10);
-plot([Pd(2),Pd(2)+30*sind(Pd(3))], [Pd(1),Pd(1)+30*cosd(Pd(3))], 'b--', 'LineWidth', 2);
+plot(Pd(2)+20*sin(Pd(3)),Pd(1)+20*cos(Pd(3)), 'x', 'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'red', 'MarkerSize', 10);
+plot([Pd(2),Pd(2)+30*sin(Pd(3))], [Pd(1),Pd(1)+30*cos(Pd(3))], 'b--', 'LineWidth', 2);
 legend('Ground truth', 'Filter Prediction', 'Dock location','Homing point','Path', 'Location', 'best'); 
 xlabel('East y [m]'); ylabel('North x [m]');
 axis equal;
 
 figure; hold on;grid on;
-plot(t,zeros(size(t))+wrapTo180(Pd(3)));plot(t, x_hat(8,:));
+plot(t,zeros(size(t))+wrapToPi(Pd(3)));plot(t, x_hat(8,:));
 fill([t, fliplr(t)], [x_hat(8,:)-2*dock_yaw_cov, fliplr(x_hat(8,:)+2*dock_yaw_cov)], 'k', 'FaceAlpha', 0.2, 'EdgeColor', 'none');
 xlabel('Time');
 ylabel('Dock Yaw [º]');
 title('Docking Station orientation estimate');
-ylim([-180,180]);
+%ylim([-180,180]);
 hold off;
 
 
