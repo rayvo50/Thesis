@@ -1,4 +1,4 @@
-classdef LOS_Controller_r < handle
+classdef ua_controller < handle
     properties
         %parameters:
         K_delta
@@ -19,7 +19,7 @@ classdef LOS_Controller_r < handle
     end
     
     methods
-        function self = LOS_Controller_r(Dt)
+        function self = ua_controller(Dt)
             self.K_delta = 10;
             self.K_phi = 0.1;
             self.K_e=-1;
@@ -30,7 +30,7 @@ classdef LOS_Controller_r < handle
 
             self.state=1;
             self.yaw_corr = 0;
-            self.output =[0;0;NaN];
+            self.output =[0;NaN;0];
 
             self.debug = [0;0];
         end
@@ -62,23 +62,25 @@ classdef LOS_Controller_r < handle
                     phi = (bearing+deg2rad(45))/deg2rad(45)*self.K_phi/distance;
                     self.yaw_corr = self.yaw_corr + phi*self.Dt;
                 elseif self.yaw_corr > 0
-                    self.yaw_corr = max(0,self.yaw_corr -2*self.K_phi*self.Dt);
+                    self.yaw_corr = max(0,self.yaw_corr - self.K_phi*self.Dt);
                 elseif self.yaw_corr < 0
-                    self.yaw_corr = min(0,self.yaw_corr +2*self.K_phi*self.Dt);
+                    self.yaw_corr = min(0,self.yaw_corr + self.K_phi*self.Dt);
                 end
                 yaw_d = wrapToPi(yaw_home+self.yaw_corr);
-                self.output = [0.3;yaw_d;NaN];
+                self.output = [0.3; NaN; yaw_d];
                 self.debug = [yaw_home, self.yaw_corr];
         
             % dock path following
             elseif self.state ==2
-                Delta = 5; %min(K_delta*exp(-cross_track), 5);
+                % LOS path following 
+                Delta = 2; %min(K_delta*exp(-cross_track), 5);
                 x_los = x(9)-Delta;
                 y_los = 0;
 
                 yaw_des = atan2(y_los-x(10),x_los-x(9));
-            
-                self.output = real([0.3;NaN;yaw_des]);
+
+                % "publish references"
+                self.output = real([0.3; NaN; yaw_des]);
             end
         end
 

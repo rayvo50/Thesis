@@ -50,11 +50,11 @@ classdef EKF < handle
             obj.R4 = 10;
             obj.Q4 = 0.01;
             % AUV in DS horizontal
-            obj.R5 = 1000*[1,0.5;0.5,1];
-            obj.Q5 = eye(2);
-            % AUV in DS Orientation
-            obj.R6 = 100;
-            obj.Q6 = 0.01;
+            obj.R5 = 5000*[1,0.5;0.5,1];
+            obj.Q5 = 0.1+eye(2);
+            % AUV in DS Orientation % this one is good
+            obj.R6 = 1;
+            obj.Q6 = 0.1;
 
 
             % Initialization 
@@ -83,13 +83,13 @@ classdef EKF < handle
             obj.debug = zeros(2,1);
         end
         
-        function obj = predict(obj, input)
+        function obj = predict(obj, y)
             % rotational filter
-            obj.x_pred(5) = wrapTo180(obj.X(5) + input(1)*obj.Dt);
+            obj.x_pred(5) = wrapTo180(obj.X(5) + y(1)*obj.Dt);
             obj.P2 = obj.P2 + obj.Q2;
 
             %horizontal filter
-            dvl = [input(2)*cos(obj.X(5));input(2)*sin(obj.X(5))];
+            dvl = Rot(obj.x_pred(5))*y(2:3); %dvl = [input(2)*cos(obj.X(5));input(2)*sin(obj.X(5))];
             A = eye(4)+kron([0,obj.Dt;0,0],eye(2));
             B = kron([obj.Dt;0],eye(2));
             obj.x_pred(1:4) = A*obj.X(1:4)+B*dvl;
@@ -102,17 +102,18 @@ classdef EKF < handle
             % dock orientation estimate filter
             obj.x_pred(8) = obj.X(8);
             obj.P4 = obj.P4 + obj.Q4;
+            
+            % relative orientation estimate filter
+            obj.x_pred(11) = wrapToPi(obj.X(11) + y(1)*obj.Dt);
+            obj.P6 = obj.P6 + obj.Q6; 
 
             % relative position estimate filter
-            dvl = [input(2)*cos(obj.X(11));input(2)*sin(obj.X(11))];
+            dvl = Rot(obj.x_pred(11))*y(2:3);% [input(2)*cos(obj.X(11));input(2)*sin(obj.X(11))];
             A = eye(2);
             B = obj.Dt*eye(2);
             obj.x_pred(9:10) = A*obj.X(9:10)+B*dvl;
             obj.P5 = obj.P5 + obj.Q5;
 
-            % relative orientation estimate filter
-            obj.x_pred(11) = wrapToPi(obj.X(11) + input(1)*obj.Dt);
-            obj.P6 = obj.P6 + obj.Q6; 
         end
 
         function obj = update(obj, y)
@@ -151,7 +152,7 @@ classdef EKF < handle
             obj.P4 = (1 - obj.K4)*obj.P4;
             
             % relative position estimate filter
-            y_ = (-Rot(obj.X(11))*usbl_b  + usbl_ds)/2; 
+            y_ = usbl_ds;
             hx_ = obj.x_pred(9:10);
             obj.X(9:10) = obj.x_pred(9:10) + obj.K5*(y_-hx_);
             obj.P5 = (eye(2) - obj.K5*H)*obj.P5;

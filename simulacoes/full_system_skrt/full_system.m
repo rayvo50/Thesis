@@ -26,8 +26,8 @@ sway_pid = sway_PID_controller();
 
 y0 = measure(x(:,1),Pd);
 X0 = [y0(1),y0(2),0,0,y0(3), y0(4)*cos(y0(5)+y0(3)), y0(4)*sin(y0(5)+y0(3)), y0(5)+y0(3),1,1,1]';
-kf = filter(X0,Dt);
-x_hat = zeros(5,length(t));
+ekf = EKF(X0,Dt);
+x_hat = zeros(11,length(t));
 dock_yaw_cov = zeros(1,length(t));
 dock_pos_cov = zeros(4,length(t));
 
@@ -47,9 +47,9 @@ for k=2:length(t)
     y(:,k) = measure(x(:,k-1),Pd);
 
     % =============== Filter ==============================================
-    kf = kf.predict(y(8:10,k));
-    kf = kf.update(y(1:7,k));
-    x_hat(:,k) = kf.X;
+    ekf = ekf.predict(y(8:10,k));
+    ekf = ekf.update(y(1:7,k));
+    x_hat(:,k) = ekf.X;
     % debug(:,k) = ekf.debug;
     dock_yaw_cov(:,k) = ekf.P4;
     dock_pos_cov(:,k) = ekf.P3(:);
