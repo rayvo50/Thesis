@@ -57,8 +57,8 @@ classdef sway_PID_controller < handle
                 self.output = 0;
                 return
             end
-            sway
-            error = sway_ref - sway
+            
+            error = sway_ref - sway;
             
             sway_rate = (sway - self.sway_prev)/self.Dt;
             if self.first_it

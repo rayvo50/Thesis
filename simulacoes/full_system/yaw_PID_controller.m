@@ -27,16 +27,16 @@ classdef yaw_PID_controller < handle
         function self = yaw_PID_controller()
             % Parameters
             N_r = -0.5;
-            I_z = 1;
+            I_z = 4.14;
             self.tau_max = 20.0; % N.m
             a = 10.0; % rad/s
         
             alpha = 1.0 / I_z;
             beta = -N_r / I_z;
         
-            w_n =6; % rad/s
-            qsi = 0.99;
-            pole = -10;
+            w_n = 4; % rad/s
+            qsi = 1;
+            pole = -20;
         
             self.Dt = 0.1;
         

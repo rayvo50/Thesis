@@ -21,9 +21,9 @@ classdef ua_controller < handle
     methods
         function self = ua_controller(Dt)
             self.K_delta = 10;
-            self.K_phi = 0.1;
+            self.K_phi = 1;
             self.K_e=-1;
-            self.alpha = deg2rad(10);
+            self.alpha = deg2rad(20);
             self.home_D = 20;
             self.R = 20;
             self.Dt = Dt;
@@ -39,12 +39,14 @@ classdef ua_controller < handle
             
             % check if in "entering zone"
             % TODO:fix this
-            if (abs(atan2(x(2)-x(7), x(1)-x(6)) - x(8))<=self.alpha) && (sqrt( (x(2)-x(7))^2 + (x(1)-x(6))^2 ) > 15)
+            if (abs(atan2(x(2), x(1)))<=self.alpha) && (sqrt(x(2)^2 + x(1)^2) > 15)
+                rad2deg(atan2(x(2), x(1)));
                 self.state=2;
             end
             
             % aproaching
             if self.state == 0
+                % Not yet implemented
                 0;
 
             % homing
@@ -67,6 +69,7 @@ classdef ua_controller < handle
                 elseif self.yaw_corr < 0
                     self.yaw_corr = min(0,self.yaw_corr + self.K_phi*self.Dt);
                 end
+                self.yaw_corr;
                 yaw_d = wrapToPi(yaw_home+self.yaw_corr);
                 self.output = [0.3; NaN; yaw_d];
                 self.debug = [yaw_home, self.yaw_corr];
@@ -75,10 +78,10 @@ classdef ua_controller < handle
             elseif self.state ==2
                 % LOS path following 
                 Delta = 2; %min(K_delta*exp(-cross_track), 5);
-                x_los = x(9)-Delta;
+                x_los = x(1)-Delta;
                 y_los = 0;
 
-                yaw_des = atan2(y_los-x(10),x_los-x(9));
+                yaw_des = atan2(y_los-x(2),x_los-x(1));
 
                 % "publish references"
                 self.output = real([0.3; NaN; yaw_des]);
