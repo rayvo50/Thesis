@@ -3,9 +3,9 @@ clearvars;clc;close all;format longg;
 
 % initial conditions and parameters
 Pd = [10,10,deg2rad(90)];
-P0 = [6,30,deg2rad(-90),0,0,0]';
+P0 = [0,15,deg2rad(0),0,0,0]';
 Dt=0.1;
-Vc = [0.2;0];
+Vc = [0;0];
 
 
 %% simulation
@@ -19,7 +19,7 @@ u = zeros(3, length(t));
 tau = zeros(2, length(t));
 y = zeros(10,length(t));
 
-controller = fa_controller(Dt);
+controller = ua_controller(Dt);
 yaw_pid = yaw_PID_controller();
 surge_pid = surge_PID_controller();
 sway_pid = sway_PID_controller();
@@ -77,40 +77,86 @@ for k=2:length(t)
     end
 end
 
-x = x(:,2:k);
-x_hat = x_hat(:,2:k);
-y = y(:,2:k);
-u = u(:,2:k);
-t = t(:,2:k);
+x = x(:,1:k);
+x_hat = x_hat(:,1:k);
+y = y(:,1:k);
+u = u(:,1:k);
+t = t(:,1:k);
+
 
 %% plots
 % Trajectory
+% figure; hold on; grid on;
+% plot(x(2,:), x(1,:), 'LineWidth', 2); 
+% plot(x_hat(2,:), x_hat(1,:), 'LineWidth', 1); 
+% plot(Pd(2)-0.5, Pd(1), 's', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'black', 'MarkerSize', 10);
+% plot(Pd(2)+20*sin(Pd(3)),Pd(1)+20*cos(Pd(3)), 'x', 'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'red', 'MarkerSize', 10, 'LineWidth',5);
+% plot([Pd(2),Pd(2)+20*sin(Pd(3))], [Pd(1),Pd(1)+20*cos(Pd(3))], '--', 'Color',[0.5,0.5,0.5],  'LineWidth', 2);
+% 
+% 
+% nr_samples = 7;
+% samples_time = [t(1:length(t)/(nr_samples-1):end) t(end-40)];
+% a = find(ismember(t, samples_time) == 1);
+% samples_mvector = [x(2,a); x(1,a); x(3,a)].';        
+% for i = 1:length(samples_mvector)
+%     GTF_Simulink_PlotAUV([samples_mvector(i,1),samples_mvector(i,2),0], [0,0,-samples_mvector(i,3)*180/pi-90], 0.1, 0, [0.9290 0.6940 0.1250],1);
+% end
+% plotFilledTriangle(Pd(1:2), .5, Pd(3)*180/pi, 'black');
+% legend('Ground truth', 'Dock location','Homing point','Path', 'Location', 'best'); 
+% xlabel('$y^{\mathcal{D}}$ [m]', 'Interpreter','latex'); ylabel('$x^{\mathcal{D}}$ [m]','Interpreter','latex');
+%axis equal
+% xlim([5, 35])
+% ylim([-2, 12])
+
+
+%% PLOTS 
+% XY plot
 figure; hold on; grid on;
-plot(x(2,:), x(1,:), 'LineWidth', 2); 
-%plot(x_hat(2,:), x_hat(1,:), 'LineWidth', 1); 
-plot(Pd(2), Pd(1), '^', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'green', 'MarkerSize', 10);
-plot(Pd(2)+20*sin(Pd(3)),Pd(1)+20*cos(Pd(3)), 'x', 'MarkerEdgeColor', 'red', 'MarkerFaceColor', 'red', 'MarkerSize', 10);
-plot([Pd(2),Pd(2)+20*sin(Pd(3))], [Pd(1),Pd(1)+20*cos(Pd(3))], 'b--', 'LineWidth', 2);
-legend('Ground truth', 'Dock location','Homing point','Path', 'Location', 'best'); 
-xlabel('East y [m]'); ylabel('North x [m]');
-axis equal;
+% docking station for legend
+plot(0,-0.5, 's', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'black', 'MarkerSize', 10);
+% path 
+plot([0,0], [0,20], '--', 'Color',[0.5,0.5,0.5], LineWidth=2);
+% real trajectory
+xy = Rot(-Pd(3))*(x(1:2,:) - Pd(1:2)'); plot(xy(2,:), xy(1,:), Color=[0 0.4470 0.7410], LineWidth=2)
+% filter estimate
+plot(x_hat(2,2:end), x_hat(1,2:end), Color=[0.8500 0.3250 0.0980], LineWidth=2)
+% draw DS
+plotFilledTriangle([0,0], .5, 0, 'black');
+% draw auv at given positions
+nr_samples = 7;
+samples_time = [t(1:length(t)/(nr_samples-1):end) t(end-40)]; 
+a = find(ismember(t, samples_time) == 1);
+samples_mvector = [xy(2,a); xy(1,a); x(3,a)-Pd(3)].';        
+for i = 1:length(samples_mvector)
+    GTF_Simulink_PlotAUV([samples_mvector(i,1),samples_mvector(i,2),0], [0,0,-samples_mvector(i,3)*180/pi-90], 0.1, 0, [0.9290 0.6940 0.1250],1);
+end
+%labels and shit
+xlabel('$y^{\mathcal{D}}$ [m]', 'Interpreter','latex'); ylabel('$x^{\mathcal{D}}$ [m]','Interpreter','latex');
+legend('Docking Station', 'Reference Trajectory','Real Trajectory','Filter Prediction', 'Location', 'best'); 
+%axis equal
+xlim([-2, 17])
+ylim([-2 17])
 
+% heading plot
+figure;hold on;
+plot(t,wrapTo360(rad2deg(x(3,:)-Pd(3))), Color=[0 0.4470 0.7410], LineWidth=2) 
+plot(t,wrapTo360(rad2deg(x_hat(5,:))), Color=[0.8500 0.3250 0.0980], LineWidth=2)
+legend('Real Heading','Estimated Heading', 'Location', 'best'); 
+xlabel('Time [s]', 'Interpreter','latex'); ylabel('Heading [º]');
 
+% estimatation error position
+figure;hold on;
+error = sqrt((x_hat(1,2:end)-xy(1,2:end)).^2 + (x_hat(2,2:end)-xy(2,2:end)).^2 ) ;
+plot(t(2:end),error, Color=[0 0 0], LineWidth=2) 
+%plot(t,wrapTo360(rad2deg(x_hat(5,:))), Color=[0.8500 0.3250 0.0980], LineWidth=2)
+xlabel('Time [s]', 'Interpreter','latex'); ylabel('Position Error [m]','Interpreter','latex');
 
-figure; hold on; grid on; axis equal;
-xy = Rot(-Pd(3))*(x(1:2,:) - Pd(1:2)');
-plot(xy(2,:), xy(1,:))
-plot(x_hat(2,:), x_hat(1,:))
-plot(0,0, '^', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'green', 'MarkerSize', 10);
-legend('Ground Truth', 'Filter Prediction','Docking Station', 'Location', 'best'); 
-title('Range');
+% estimatation error heading
+figure;hold on;
+error = wrapToPi(x_hat(5,2:end)-x(3,2:end)+Pd(3)) ;
+plot(t(2:end),error, Color=[0 0 0], LineWidth=2) 
+xlabel('Time [s]', 'Interpreter','latex'); ylabel('Heading Error [º]');
 
-
-figure
-plot(t,wrapTo360(rad2deg(x(3,:)-Pd(3))))
-hold on
-plot(t,wrapTo360(rad2deg(x_hat(5,:))))
-plot(t, wrapTo360(rad2deg(u(3,:))))
 % 
 % figure; hold on; grid on;
 % plot(y(6,:))
