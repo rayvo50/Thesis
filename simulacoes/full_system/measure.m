@@ -14,8 +14,8 @@ function y = measure(x, Pd,Vc)
     % USBL measurements
     distance = sqrt((x(1)-Pd(1))^2+(x(2)-Pd(2))^2);
     P_DB = [Pd(1)-x(1);Pd(2)-x(2)];
-    USBL_B = Rot(-x(3))*P_DB + position_noise*(1+tanh(distance-3))*randn(size(P_DB));
-    USBL_D = -Rot(-Pd(3))*P_DB + position_noise*(1+tanh(distance-3))*randn(size(P_DB));
+    USBL_B = Rot(-x(3))*P_DB + position_noise*(1+tanh(0.4*distance-3))*randn(size(P_DB));
+    USBL_D = -Rot(-Pd(3))*P_DB + position_noise*(1+tanh(0.4*distance-3))*randn(size(P_DB));
     % convert to range-bearing
     y(4:5) = xy2rb(USBL_B);
     y(6:7) = xy2rb(USBL_D);

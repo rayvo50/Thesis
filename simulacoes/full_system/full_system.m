@@ -111,7 +111,7 @@ t = t(:,1:k);
 
 %% PLOTS 
 % XY plot
-figure; hold on; grid on;
+fig = figure(); hold on; grid on;
 % docking station for legend
 plot(-999,-999, 's', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'black', 'MarkerSize', 10);
 % path 
@@ -123,8 +123,8 @@ plot(x_hat(2,2:end), x_hat(1,2:end), Color=[0.8500 0.3250 0.0980], LineWidth=2)
 % draw DS
 plotFilledTriangle([0,0], .5, 0, 'black');
 % draw auv at given positions
-nr_samples = 7;
-samples_time = [t(1:length(t)/(nr_samples-1):end) t(end-40)]; 
+nr_samples = 8;
+samples_time = [t(1:int32(length(t)/(nr_samples-1)):end)]; 
 a = find(ismember(t, samples_time) == 1);
 samples_mvector = [xy(2,a); xy(1,a); x(3,a)-Pd(3)].';        
 for i = 1:length(samples_mvector)
@@ -137,50 +137,62 @@ legend('Docking Station', 'Reference Trajectory','Real Trajectory','Filter Predi
 xlim([-2, 17])
 ylim([-2 17])
 set(gcf, 'Position', [100, 100, 600, 600]); 
+print(fig, '../../imagens_pic/xy.png', '-dpng', '-r300'); 
 
 
 % heading plot
-figure;hold on; grid on;
+fig = figure();hold on; grid on;
 plot(t,wrapTo360(rad2deg(x(3,:)-Pd(3))), Color=[0 0.4470 0.7410], LineWidth=2) 
 plot(t,wrapTo360(rad2deg(x_hat(5,:))), Color=[0.8500 0.3250 0.0980], LineWidth=2)
 legend('Real Heading','Estimated Heading', 'Location', 'best'); 
+xlim([min(t), max(t) ]);
 xlabel('Time [s]', 'Interpreter','latex'); ylabel('Heading [º]');
 set(gcf, 'Position', [100, 100, 600, 200]); 
+print(fig, '../../imagens_pic/yaw.png', '-dpng', '-r300'); 
+
 
 % filter errors
-figure;hold on; grid on;
+fig = figure();hold on; grid on;
 % position
 yyaxis left;
 error = sqrt((x_hat(1,2:end)-xy(1,2:end)).^2 + (x_hat(2,2:end)-xy(2,2:end)).^2 ) ;
-plot(t(2:end),error, Color=[0 0.4470 0.7410], LineWidth=2) 
+plot(t(2:end),error, Color=[0.1059 0.3686 0.1255], LineWidth=2) 
 ylabel('Position Error [m]','Interpreter','latex');
+set(gca, 'ycolor', [0.1059 0.3686 0.1255]); 
 % heading
 yyaxis right;
 error = wrapToPi(x_hat(5,3:end)-x(3,3:end)+Pd(3));
-plot(t(3:end),error, Color=[0.8500 0.3250 0.0980], LineWidth=2) 
+plot(t(3:end),error, Color=[0.6350 0.0780 0.1840], LineWidth=2) 
 ylabel('Heading Error [º]');
+set(gca, 'ycolor', [0.6350 0.0780 0.1840]); 
 xlabel('Time [s]', 'Interpreter','latex');
 xlim([min(t), max(t) ])
-set(gcf, 'Position', [100, 100, 600, 150]); 
+set(gcf, 'Position', [100, 100, 600, 150]);
+print(fig, '../../imagens_pic/filter_error.png', '-dpng', '-r300'); 
+
 
 % control errors ig
-figure;hold on; grid on;
+fig = figure();hold on; grid on;
 a = find(state==2);
 % position
 yyaxis left;
 ylim([-0.1, 3.8])
 error = xy(2,a);
-plot(t(a),error, Color=[0 0.4470 0.7410], LineWidth=2)
+plot(t(a),error, Color=[0.1059 0.3686 0.1255], LineWidth=2)
 ylabel('Cross-track Error [m]','Interpreter','latex');
+set(gca, 'ycolor', [0.1059 0.3686 0.1255]); 
 % heading
 yyaxis right;
 error = 180/pi*wrapToPi(pi-x(3,a)+Pd(3));
-plot(t(a),error, Color=[0.8500 0.3250 0.0980], LineWidth=2) 
+plot(t(a),error, Color=[0.6350 0.0780 0.1840], LineWidth=2) 
 ylim([min(error), max(error)+2])
 ylabel('Heading Error [º]');
+set(gca, 'ycolor', [0.6350 0.0780 0.1840]);
 xlim([min(t(a)), max(t(a)) ])
 xlabel('Time [s]', 'Interpreter','latex');
 set(gcf, 'Position', [100, 100, 600, 150]); 
+print(fig, '../../imagens_pic/docking_error.png', '-dpng', '-r300'); 
+
 
 
 % % cross track error 
