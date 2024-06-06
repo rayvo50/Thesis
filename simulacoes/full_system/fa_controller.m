@@ -84,7 +84,7 @@ classdef fa_controller < handle
                 p = y(6)*sin(y(7));
 
                 % qsi dynamics in DS frame
-                ksi_dot = self.K_T*([min(0.6, -self.K_x*d*(1-(1-exp(-2*abs(p)))^2)) ;-self.K_y*p] - Rot(x(5))*y(9:10)); 
+                ksi_dot = self.K_T*([min(0.6, -self.K_x*d*(1-(1-exp(-2*abs(p)))^2)) ;-self.K_y*p] - Rot(x(5))is*y(9:10)); 
                 self.ksi = self.ksi + ksi_dot*self.Dt;
                 self.debug = Rot(-x(5))*[min(0.6, -self.K_x*d*(1-(1-exp(-2*abs(p)))^2)) ;-self.K_y*p];
 

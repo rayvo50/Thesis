@@ -27,13 +27,13 @@ fuselage = combine(cyl1, nose, tailcap);
 % fins and rudders
 rudders=translate(rotateZ(scale(UnitSphere(2),.75,1.5,.2),45),4,1,1);
 rudders.facecolor = [0,0,0];
-rudders2=translate(rotateZ(scale(UnitSphere(2),.75,1.5,.2),-45),4,-1,1);
+rudders2=translate(rotateZ(scale(UnitSphere(2),.75,1.5,.2),-45),-4,0,1);
 rudders2.facecolor = [0,0,0];
-rudders3=translate(rotateZ(scale(UnitSphere(2),.75,1.5,.2),-45),-4,1,1);
-rudders3.facecolor = [0,0,0];
-rudders4=translate(rotateZ(scale(UnitSphere(2),.75,1.5,.2),45),-4,-1,1);
-rudders4.facecolor = [0,0,0];
-thrusters = combine(rudders, rudders2, rudders3, rudders4);
+rudders=translate(rotateZ(scale(UnitSphere(2),.75,1.5,.2),45),4,1,1);
+rudders.facecolor = [0,0,0];
+rudders2=translate(rotateZ(scale(UnitSphere(2),.75,1.5,.2),-45),-4,0,1);
+rudders2.facecolor = [0,0,0];
+thrusters = combine(rudders, rudders2);
 
 %motors and propellers
 motor = scale(UnitSphere(2),1.5,.5,.5);

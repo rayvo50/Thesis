@@ -29,7 +29,7 @@ classdef kalman_filter < handle
             % self.Q5 = 0.1+eye(2);
             
             % orientation filter
-            self.R2 = 1;
+            self.R2 = 10;
             self.Q2 = 0.1;
 
             % Initialization 

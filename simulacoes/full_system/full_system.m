@@ -113,7 +113,7 @@ t = t(:,1:k);
 % XY plot
 figure; hold on; grid on;
 % docking station for legend
-plot(0,-0.5, 's', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'black', 'MarkerSize', 10);
+plot(-999,-999, 's', 'MarkerEdgeColor', 'black', 'MarkerFaceColor', 'black', 'MarkerSize', 10);
 % path 
 plot([0,0], [0,20], '--', 'Color',[0.5,0.5,0.5], LineWidth=2);
 % real trajectory
@@ -136,26 +136,77 @@ legend('Docking Station', 'Reference Trajectory','Real Trajectory','Filter Predi
 %axis equal
 xlim([-2, 17])
 ylim([-2 17])
+set(gcf, 'Position', [100, 100, 600, 600]); 
+
 
 % heading plot
-figure;hold on;
+figure;hold on; grid on;
 plot(t,wrapTo360(rad2deg(x(3,:)-Pd(3))), Color=[0 0.4470 0.7410], LineWidth=2) 
 plot(t,wrapTo360(rad2deg(x_hat(5,:))), Color=[0.8500 0.3250 0.0980], LineWidth=2)
 legend('Real Heading','Estimated Heading', 'Location', 'best'); 
 xlabel('Time [s]', 'Interpreter','latex'); ylabel('Heading [º]');
+set(gcf, 'Position', [100, 100, 600, 200]); 
 
-% estimatation error position
-figure;hold on;
+% filter errors
+figure;hold on; grid on;
+% position
+yyaxis left;
 error = sqrt((x_hat(1,2:end)-xy(1,2:end)).^2 + (x_hat(2,2:end)-xy(2,2:end)).^2 ) ;
-plot(t(2:end),error, Color=[0 0 0], LineWidth=2) 
-%plot(t,wrapTo360(rad2deg(x_hat(5,:))), Color=[0.8500 0.3250 0.0980], LineWidth=2)
-xlabel('Time [s]', 'Interpreter','latex'); ylabel('Position Error [m]','Interpreter','latex');
+plot(t(2:end),error, Color=[0 0.4470 0.7410], LineWidth=2) 
+ylabel('Position Error [m]','Interpreter','latex');
+% heading
+yyaxis right;
+error = wrapToPi(x_hat(5,3:end)-x(3,3:end)+Pd(3));
+plot(t(3:end),error, Color=[0.8500 0.3250 0.0980], LineWidth=2) 
+ylabel('Heading Error [º]');
+xlabel('Time [s]', 'Interpreter','latex');
+xlim([min(t), max(t) ])
+set(gcf, 'Position', [100, 100, 600, 150]); 
 
-% estimatation error heading
-figure;hold on;
-error = wrapToPi(x_hat(5,2:end)-x(3,2:end)+Pd(3)) ;
-plot(t(2:end),error, Color=[0 0 0], LineWidth=2) 
-xlabel('Time [s]', 'Interpreter','latex'); ylabel('Heading Error [º]');
+% control errors ig
+figure;hold on; grid on;
+a = find(state==2);
+% position
+yyaxis left;
+ylim([-0.1, 3.8])
+error = xy(2,a);
+plot(t(a),error, Color=[0 0.4470 0.7410], LineWidth=2)
+ylabel('Cross-track Error [m]','Interpreter','latex');
+% heading
+yyaxis right;
+error = 180/pi*wrapToPi(pi-x(3,a)+Pd(3));
+plot(t(a),error, Color=[0.8500 0.3250 0.0980], LineWidth=2) 
+ylim([min(error), max(error)+2])
+ylabel('Heading Error [º]');
+xlim([min(t(a)), max(t(a)) ])
+xlabel('Time [s]', 'Interpreter','latex');
+set(gcf, 'Position', [100, 100, 600, 150]); 
+
+
+% % cross track error 
+% figure;hold on; grid on;
+% error = xy(2,2:end);
+% plot(t(2:end),error, Color=[0 0 0], LineWidth=2) 
+% xlabel('Time [s]', 'Interpreter','latex'); ylabel('cross-track error [º]');
+% set(gcf, 'Position', [100, 100, 600, 150]); 
+% 
+% % heading error
+% figure;hold on; grid on;
+% error = 180/pi*wrapToPi(pi-x(3,2:end)+Pd(3));
+% plot(t(2:end),error, Color=[0 0 0], LineWidth=2) 
+% xlabel('Time [s]', 'Interpreter','latex'); ylabel('Heading error[º]');
+% set(gcf, 'Position', [100, 100, 600, 150]); 
+
+
+% % Left y-axis
+% yyaxis left;
+% plot(x, y1, 'b-', 'LineWidth', 2); % Plotting first dataset in blue
+% ylabel('Left Scale');
+% 
+% % Right y-axis
+% yyaxis right;
+% plot(x, y2, 'r-', 'LineWidth', 2); % Plotting second dataset in red
+% ylabel('Right Scale');
 
 % 
 % figure; hold on; grid on;
@@ -170,10 +221,10 @@ xlabel('Time [s]', 'Interpreter','latex'); ylabel('Heading Error [º]');
 % legend('Measured', 'Filter Prediction', 'Location', 'best'); 
 % title('Dock Bearing');
 % 
-figure; hold on; grid on;
-plot(state(2:k))
-title('Controller state');
-% 
+% figure; hold on; grid on;
+% plot(state(2:k))
+% title('Controller state');
+%
 % figure; hold on; grid on;
 % plot(u(2,2:k))
 % title('Yaw desired');

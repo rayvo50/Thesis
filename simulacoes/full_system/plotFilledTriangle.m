@@ -5,7 +5,12 @@ function plotFilledTriangle(center, size, rotation, color)
     % color: color of the triangle ('black', 'yellow', or 'red')
     
     % Vertices of the triangle (equilateral)
-    vertices = size * [-1, 0; 1, 0; 0.5,-0.5; 0.5,-1.5; -0.5, -1.5; -0.5, -0.5];
+    vertices = size * [-1, 0; 
+                        1, 0; 
+                        0.25,-0.5;
+                        0.25,-1.5;
+                        -0.25, -1.5;
+                        -0.25, -0.5];
     
     % Rotation matrix
     rotationMatrix = [cosd(rotation), -sind(rotation); sind(rotation), cosd(rotation)];
