@@ -5,6 +5,11 @@ classdef fa_controller < handle
         K_x
         K_y
         K_phi
+        
+        K1
+        K2
+        Ka
+
         K_e
         alpha
         home_D
@@ -12,8 +17,9 @@ classdef fa_controller < handle
         Dt
 
         %variables:
-        state
+        sigma
         yaw_corr
+        state
         ksi
         output
 
@@ -23,10 +29,14 @@ classdef fa_controller < handle
     
     methods
         function self = fa_controller(Dt)
-            self.K_T = 1;
-            self.K_x = 0.02;
-            self.K_y = 0.02;
+            self.K_T = 0.2;
+            self.K_y = 0.05;
             self.K_phi = 1;
+            
+            self.K1 = 2*0.7*0.2;
+            self.K2 = 0.2^2;
+            self.Ka= 1/Dt;
+
             self.K_e=-1;
             self.alpha = deg2rad(20);
             self.home_D = 20;
@@ -34,6 +44,7 @@ classdef fa_controller < handle
             self.Dt = Dt;
 
             self.state=1;
+            self.sigma= 0;
             self.yaw_corr = 0;
             self.ksi = 0;
             self.output =[0;NaN;0];
@@ -80,19 +91,43 @@ classdef fa_controller < handle
         
             % dock path following
             elseif self.state ==2
-                d = y(6)*cos(y(7)); 
-                p = y(6)*sin(y(7));
 
-                % qsi dynamics in DS frame
-                ksi_dot = self.K_T*([min(0.6, -self.K_x*d*(1-(1-exp(-2*abs(p)))^2)) ;-self.K_y*p] - Rot(x(5))is*y(9:10)); 
-                self.ksi = self.ksi + ksi_dot*self.Dt;
-                self.debug = Rot(-x(5))*[min(0.6, -self.K_x*d*(1-(1-exp(-2*abs(p)))^2)) ;-self.K_y*p];
+                cte = -x(2);
+                u = sqrt(y(9)^2+y(10)^2);
+      
+                % sigma dynamics with anti-windup 
+                sigma_dot = cte + self.Ka *( -self.K1/u * cte - self.K2/u * self.sigma - sigma_e( -self.K1/u * cte - self.K2/u * self.sigma));
+                self.sigma = self.sigma + sigma_dot*self.Dt; 
+                
+                % u = -K1/U*e - K2/U*sigma 
+                yaw_correction = -self.K1/u * cte - self.K2/u * self.sigma;
+                  
+                % psi_d = path_psi + asin(sat(u)) 
+                yaw_d = wrapTo2Pi(pi + asin(sigma_e(yaw_correction)));
+                
+                % speed profile
+                V_d_ = 0.3 + 0.2*tanh(0.5*(x(1)-8));
+                V_d = [V_d_*cos(yaw_d);V_d_*sin(yaw_d)];
+                V_d_b = Rot(-x(5))*V_d;
+                u_d = V_d_b(1);
+                v_d = V_d_b(2);
+                self.output = [V_d_; v_d; pi];
 
-                % rotate velocity reference to bofy frame
-                v_ref = Rot(-x(5))*self.ksi;
 
-                % "publish references"
-                self.output = [v_ref(1); v_ref(2); pi];
+
+                % d = y(6)*cos(y(7)); 
+                % p = y(6)*sin(y(7));
+                % 
+                % % qsi dynamics in DS frame
+                % ksi_dot = self.K_T*( [min(0.6, -(0.3 +0.2*tanh(2*(x(1)-2))) *(1-(1-exp(-2*abs(p)))^2)) ;-self.K_y*p] - Rot(x(5))*y(9:10)); 
+                % self.ksi = self.ksi + ksi_dot*self.Dt;
+                % self.debug = Rot(-x(5))*[min(0.6, -(0.3 +0.2*tanh(2*(x(1)-2))) *d*(1-(1-exp(-2*abs(p)))^2)) ;-self.K_y*p];
+                % 
+                % % rotate velocity reference to bofy frame
+                % v_ref = Rot(-x(5))*self.ksi;
+                % 
+                % % "publish references"
+                % self.output = [v_ref(1); v_ref(2); pi];
             end
         end
 

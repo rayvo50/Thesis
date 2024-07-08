@@ -29,8 +29,8 @@ classdef sway_PID_controller < handle
             self.tau_max = 25.0; % N.m
             a = 1.0; % rad/s
 
-            w_n = 0.5; % rad/s
-            qsi = 1.4;
+            w_n = 1; % rad/s
+            qsi = 0.6;
         
             % self.Dt calculation
             self.Dt = 0.1;
