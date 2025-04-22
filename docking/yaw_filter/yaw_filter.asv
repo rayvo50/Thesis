@@ -1,0 +1,37 @@
+clearvars;clc;close all;
+load('yaw_data.mat');
+
+% generate measuremtns 
+gyro_noise = 0.5;
+gyro_bias = 5;
+gyro_meas = yaw_rate + gyro_bias + gyro_noise*randn(size(yaw_rate));
+compass_noise = 10;
+compass_meas = yaw + compass_noise*randn(size(yaw));
+plot(compass_meas);figure;plot(gyro_meas);
+
+% system model
+Dt = 0.1;
+A = [1,Dt;0,1]; B = [Dt;0]; G = [Dt,0;0,Dt]; C = [1,0];
+
+% filter design
+R = 1; Q = [0.1,0;0,0.1];
+L = dlqe(A,G,C,Q,R);
+
+% filter initialization
+time = 1:497;
+x = zeros(2,length(time));
+P = Q;
+u = gyro_meas;
+y = compass_meas;
+for k=1:496
+    %one step ahead prediction
+    K = P*C'*inv(C*P*C' + R);
+    x(k+1) = A*(eye(2) - K*C)*x(k) + B*u(k) + A*K*y(k);
+    P = A*P
+
+    % prediction
+    x(t+1) = A*x(t) + B*gyro_meas;
+    P = A*P*A' + G*Q*G';
+    % filtering
+
+end

@@ -1,0 +1,64 @@
+clear all;
+beta = 10*pi/180;
+alpha = 30*pi/180;
+terrain = @(x) -tan(beta)*x+200;
+y = measure([0;0;0;0], terrain, alpha);
+y_ = y(3:4)';
+Ds = zeros(2,1000000);
+h1s = zeros(2,1000000);
+h2s = zeros(2,1000000);
+for k = 1:1000000
+    y = y_ + (0.005*norm(y_))*randn(2,1);
+    h1 = [0;y(1)];
+    h2 = Rot(-alpha)*[0;y(2)];
+    S = h2 - h1;
+    Ps = eye(2) - (S * S')/(norm(S)^2);
+    D = Ps * h1;
+    Ds(:,k) = D;
+    h1s(:,k) = h1;
+    h2s(:,k) = h2;
+end
+
+close all;
+fig = figure(); hold on; grid on;
+plot(linspace(0,5), terrain(linspace(0,5)), 'LineWidth', 2, "Color",[0/255,0/255,0]);
+set(gca, 'YDir', 'reverse'); axis equal;
+plot(h1s(1,:), h1s(2,:), "b*");
+plot(h2s(1,:), h2s(2,:), "r*");
+plot(Ds(1,:), Ds(2,:), "g*");
+
+figure;
+subplot(2, 2, 1); 
+histogram(h1s(1,:), 100); 
+title('h1 - x');
+xlabel('Value');
+subplot(2, 2, 2);
+histogram(h1s(2,:), 100); 
+title(' h1 - z');
+xlabel('Value');
+subplot(2, 2, 3);
+histogram(h2s(1,:), 100); 
+title('h2 - x');
+xlabel('Value');
+subplot(2, 2, 4); 
+histogram(h2s(2,:), 100); 
+title('h2 - z');
+xlabel('Value');
+
+figure;
+subplot(2, 2, 1); 
+histogram(Ds(1,:), 100); 
+title('D - x');
+xlabel('Value');
+subplot(2, 2, 2);
+histogram(Ds(2,:), 100); 
+title(' D - z');
+xlabel('Value');
+subplot(2, 2, 3); 
+histogram(vecnorm(Ds), 100); 
+title('D - range');
+xlabel('Value');
+subplot(2, 2, 4);
+histogram(atan2(Ds(2,:),Ds(1,:)), 100); 
+title(' D - angle');
+xlabel('Value');
